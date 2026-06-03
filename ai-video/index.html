@@ -1,0 +1,1908 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商品AI短视频生成</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08080e;--bg2:#0f0f18;--bg3:#161622;--bg4:#1c1c2e;--bg5:#222238;
+  --border:#2a2a40;--border2:#363650;--border-focus:#7c5cfc;
+  --t1:#eaeaf5;--t2:#9999b3;--t3:#666680;--t4:#444460;
+  --accent:#7c5cfc;--accent2:#9b7eff;--accent3:rgba(124,92,252,.15);--accent-glow:rgba(124,92,252,.3);
+  --green:#00d4a0;--red:#ff5c6c;--orange:#ffa844;--blue:#4c9eff;
+  --r:12px;--rs:8px;--rl:16px;
+  --shadow:0 4px 24px rgba(0,0,0,.5);
+  --font:'SF Pro Display',-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;
+}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t1);overflow:hidden}
+::selection{background:var(--accent);color:#fff}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+a{color:var(--accent2);text-decoration:none}
+
+/* Layout */
+.app{display:flex;flex-direction:column;height:100vh}
+.header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border);background:rgba(8,8,14,.85);backdrop-filter:blur(20px);flex-shrink:0;z-index:100}
+.header-l{display:flex;align-items:center;gap:12px}
+.logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#c56cff);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;box-shadow:0 0 20px var(--accent-glow)}
+.header-title{font-size:17px;font-weight:600;letter-spacing:-.3px}
+.header-title span{color:var(--t2);font-weight:400;font-size:12px;margin-left:8px}
+.header-r{display:flex;align-items:center;gap:8px}
+.badge{font-size:10px;padding:3px 9px;border-radius:20px;background:var(--accent3);color:var(--accent2);font-weight:500}
+
+/* Settings Button */
+.settings-btn{width:36px;height:36px;border-radius:10px;background:var(--bg3);border:1px solid var(--border);color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .2s}
+.settings-btn:hover{background:var(--bg4);border-color:var(--border2);color:var(--t1)}
+
+/* Settings Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:9000;display:none;align-items:center;justify-content:center}
+.modal-overlay.active{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:90%;max-width:480px;max-height:85vh;overflow:hidden;box-shadow:var(--shadow)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border)}
+.modal-title{font-size:16px;font-weight:600}
+.modal-close{width:32px;height:32px;border-radius:8px;background:var(--bg3);border:none;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s}
+.modal-close:hover{background:var(--bg4);color:var(--t1)}
+.modal-body{padding:20px;overflow-y:auto;max-height:calc(85vh - 60px)}
+.settings-section{margin-bottom:20px}
+.settings-section-title{font-size:12px;font-weight:600;color:var(--accent2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
+.settings-item{margin-bottom:14px}
+.settings-item label{display:block;font-size:12px;color:var(--t2);margin-bottom:6px}
+.settings-item input{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--rs);color:var(--t1);font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
+.settings-item input:focus{border-color:var(--border-focus);box-shadow:0 0 0 3px var(--accent3)}
+.settings-item input::placeholder{color:var(--t3)}
+.password-wrapper{position:relative;display:flex}
+.password-wrapper input{padding-right:40px;flex:1}
+.password-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:4px}
+.password-toggle:hover{color:var(--t2)}
+.settings-hint{font-size:11px;color:var(--t3);margin-top:4px}
+.modal-footer{padding:16px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
+
+/* Tabs */
+.tabs{display:flex;padding:0 24px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;gap:2px;overflow-x:auto}
+.tab{padding:12px 18px;font-size:13px;font-weight:500;color:var(--t2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;user-select:none}
+.tab:hover{color:var(--t1);background:rgba(255,255,255,.03)}
+.tab.active{color:var(--accent2);border-bottom-color:var(--accent);background:rgba(124,92,252,.05)}
+.tab .tab-icon{margin-right:6px;font-size:14px}
+
+/* Main */
+.main{flex:1;overflow-y:auto;padding:20px 24px 40px}
+.module{display:none}.module.active{display:block}
+
+/* Cards */
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title .icon{font-size:18px}
+
+/* Form */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;font-weight:500;color:var(--t2);margin-bottom:6px}
+.form-label .required{color:var(--red);margin-left:2px}
+.form-input,.form-select,.form-textarea{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--rs);color:var(--t1);font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--border-focus);box-shadow:0 0 0 3px var(--accent3)}
+.form-textarea{resize:vertical;min-height:80px;line-height:1.6}
+.form-select{cursor:pointer;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239999b3'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.form-row{display:flex;gap:12px}
+.form-row>*{flex:1}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;border-radius:var(--rs);font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;border:none;transition:all .2s;user-select:none}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#9b5cfc);color:#fff;box-shadow:0 2px 12px var(--accent-glow)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 20px var(--accent-glow)}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-secondary{background:var(--bg4);color:var(--t1);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--border2);background:var(--bg5)}
+.btn-sm{padding:6px 14px;font-size:12px;border-radius:6px}
+.btn-ghost{background:transparent;color:var(--accent2);border:1px solid var(--accent);padding:8px 16px}
+.btn-ghost:hover{background:var(--accent3)}
+.btn-danger{background:rgba(255,92,108,.1);color:var(--red);border:1px solid rgba(255,92,108,.3)}
+.btn-danger:hover{background:rgba(255,92,108,.2)}
+.btn-group{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Upload */
+.upload-zone{border:2px dashed var(--border);border-radius:var(--r);padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(0,0,0,.2)}
+.upload-zone:hover{border-color:var(--accent);background:var(--accent3)}
+.upload-zone.dragover{border-color:var(--accent);background:var(--accent3);transform:scale(1.01)}
+.upload-icon{font-size:36px;margin-bottom:8px;opacity:.6}
+.upload-text{font-size:13px;color:var(--t2)}
+.upload-hint{font-size:11px;color:var(--t3);margin-top:4px}
+.upload-preview{display:flex;gap:12px;margin-top:12px;flex-wrap:wrap}
+.upload-thumb{position:relative;width:120px;height:120px;border-radius:var(--rs);overflow:hidden;border:1px solid var(--border)}
+.upload-thumb img{width:100%;height:100%;object-fit:cover}
+.upload-thumb .remove{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;border:none;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
+.upload-thumb .label{position:absolute;bottom:0;left:0;right:0;padding:3px 6px;background:rgba(0,0,0,.7);font-size:10px;color:var(--t2);text-align:center}
+
+/* Result panels */
+.result-panel{background:var(--bg);border:1px solid var(--border);border-radius:var(--rs);padding:16px;margin-top:12px}
+.result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.result-title{font-size:13px;font-weight:600;color:var(--accent2)}
+.result-body{font-size:13px;line-height:1.7;color:var(--t1);white-space:pre-wrap}
+.result-body.editable{background:transparent;border:1px solid transparent;border-radius:4px;padding:4px;outline:none;transition:border-color .2s}
+.result-body.editable:focus{border-color:var(--border-focus);background:var(--bg3)}
+.result-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tag{font-size:11px;padding:3px 10px;border-radius:20px;background:var(--accent3);color:var(--accent2)}
+
+/* Progress */
+.progress-bar{width:100%;height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin:12px 0}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width .5s ease;width:0}
+.progress-text{font-size:12px;color:var(--t2);text-align:center}
+
+/* Video result */
+.video-result{text-align:center;padding:20px}
+.video-result video{max-width:100%;max-height:400px;border-radius:var(--r);box-shadow:var(--shadow)}
+.video-actions{display:flex;justify-content:center;gap:10px;margin-top:16px}
+
+/* Status */
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.status-dot.processing{background:var(--orange);animation:pulse 1.5s infinite}
+.status-dot.succeeded{background:var(--green)}
+.status-dot.failed{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* History */
+.history-item{display:flex;align-items:center;gap:14px;padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--rs);margin-bottom:8px;transition:all .2s}
+.history-item:hover{border-color:var(--border2)}
+.history-thumb{width:64px;height:64px;border-radius:6px;overflow:hidden;flex-shrink:0;background:var(--bg3)}
+.history-thumb img{width:100%;height:100%;object-fit:cover}
+.history-info{flex:1;min-width:0}
+.history-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.history-meta{font-size:11px;color:var(--t3);margin-top:3px}
+.history-actions{display:flex;gap:6px;flex-shrink:0}
+
+/* Grid */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* Option cards */
+.option-card{padding:12px;border:1px solid var(--border);border-radius:var(--rs);cursor:pointer;text-align:center;transition:all .2s;background:var(--bg)}
+.option-card:hover{border-color:var(--border2)}
+.option-card.active{border-color:var(--accent);background:var(--accent3)}
+.option-card .opt-label{font-size:12px;font-weight:500}
+.option-card .opt-desc{font-size:10px;color:var(--t3);margin-top:3px}
+
+/* Toast */
+.toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;border-radius:var(--rs);font-size:13px;color:#fff;box-shadow:var(--shadow);animation:slideIn .3s ease;max-width:360px}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+.toast.info{background:var(--accent)}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+/* Spinner */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--t4);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Loading overlay */
+.loading-overlay{position:fixed;inset:0;background:rgba(8,8,14,.7);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:9000;flex-direction:column;gap:12px}
+.loading-overlay.active{display:flex}
+.loading-text{font-size:14px;color:var(--t2)}
+
+/* Responsive */
+@media(max-width:768px){
+  .main{padding:12px}
+  .grid-2{grid-template-columns:1fr}
+  .grid-3{grid-template-columns:1fr 1fr}
+  .form-row{flex-direction:column}
+  .header{padding:10px 14px}
+  .tabs{padding:0 12px}
+}
+
+/* Copy button animation */
+.copy-success{animation:copied .3s ease}
+@keyframes copied{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
+
+/* Tab content transitions */
+.module{animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* Batch textarea */
+.batch-input{min-height:200px;font-size:12px;line-height:1.8}
+
+/* Style switcher */
+.style-chip{padding:8px 16px;border-radius:20px;font-size:12px;border:1px solid var(--border);cursor:pointer;transition:all .2s;background:var(--bg)}
+.style-chip:hover{border-color:var(--border2)}
+.style-chip.active{border-color:var(--accent);background:var(--accent3);color:var(--accent2)}
+
+/* Empty state */
+.empty-state{text-align:center;padding:48px 20px;color:var(--t3)}
+.empty-state .empty-icon{font-size:48px;margin-bottom:12px;opacity:.4}
+.empty-state p{font-size:13px}
+
+/* Config panel */
+.config-bar{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:11px;color:var(--t3)}
+.config-bar .config-dot{width:6px;height:6px;border-radius:50%}
+.config-dot.connected{background:var(--green)}
+.config-dot.disconnected{background:var(--red)}
+
+/* Segment card */
+.segment-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--rs);padding:14px;margin-bottom:8px}
+.segment-card .seg-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;font-weight:600}
+.segment-card .seg-id{width:24px;height:24px;border-radius:50%;background:var(--accent3);color:var(--accent2);display:flex;align-items:center;justify-content:center;font-size:11px}
+
+/* Image URL input */
+.image-url-input{display:flex;gap:8px;margin-top:10px}
+.image-url-input input{flex:1}
+
+/* CORS notice */
+.cors-notice{background:rgba(255,168,68,.1);border:1px solid rgba(255,168,68,.3);border-radius:var(--rs);padding:12px 16px;margin-top:12px;font-size:12px;color:var(--orange);display:none}
+.cors-notice.show{display:block}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-l">
+      <div class="logo">🎬</div>
+      <div class="header-title">商品AI短视频生成 <span>Doubao-Seed-2.0 + Seedance-2.0</span></div>
+    </div>
+    <div class="header-r">
+      <div class="badge">🔥 火山方舟驱动</div>
+      <button class="settings-btn" onclick="openSettings()" title="设置">⚙️</button>
+      <button class="btn btn-sm btn-secondary" onclick="switchModule('history')">📋 历史</button>
+    </div>
+  </div>
+
+  <!-- Config bar -->
+  <div class="config-bar">
+    <div class="config-dot disconnected" id="apiStatusDot"></div>
+    <span id="apiStatusText">请先在设置中配置API</span>
+    <span style="margin-left:auto">模型：Doubao-Seed-2.0-Lite/Pro + Seedance-2.0</span>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchModule('copy')"><span class="tab-icon">✍️</span>AI文案生成</div>
+    <div class="tab" onclick="switchModule('video')"><span class="tab-icon">🎬</span>图片&视频生成</div>
+    <div class="tab" onclick="switchModule('advanced')"><span class="tab-icon">⚡</span>高阶功能</div>
+    <div class="tab" onclick="switchModule('results')"><span class="tab-icon">📦</span>生成结果</div>
+    <div class="tab" onclick="switchModule('history')"><span class="tab-icon">📋</span>历史记录</div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main">
+    <!-- ========== Module 1: AI文案生成 ========== -->
+    <div class="module active" id="mod-copy">
+      <div class="grid-2">
+        <div>
+          <!-- 商品信息输入 -->
+          <div class="card">
+            <div class="card-title"><span class="icon">📝</span>商品信息输入</div>
+            <div class="form-group">
+              <label class="form-label">商品名称 <span class="required">*</span></label>
+              <input type="text" class="form-input" id="productName" placeholder="例：iPhone 16 Pro Max 256GB">
+            </div>
+            <div class="form-group">
+              <label class="form-label">核心卖点</label>
+              <textarea class="form-textarea" id="sellingPoints" placeholder="例：钛金属外壳、A18 Pro芯片、4K120fps杜比视界、5倍光学变焦" rows="3"></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">品类</label>
+                <select class="form-select" id="category">
+                  <option value="">请选择</option>
+                  <option value="数码3C">数码3C</option>
+                  <option value="美妆个护">美妆个护</option>
+                  <option value="服饰鞋包">服饰鞋包</option>
+                  <option value="食品饮料">食品饮料</option>
+                  <option value="家居家装">家居家装</option>
+                  <option value="母婴用品">母婴用品</option>
+                  <option value="运动户外">运动户外</option>
+                  <option value="其他">其他</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">适用场景</label>
+                <input type="text" class="form-input" id="scenario" placeholder="例：商务、送礼、日常通勤">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">画风风格</label>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+                  <div class="style-chip active" data-style="写实带货" onclick="selectStyle(this)">📸 写实带货</div>
+                  <div class="style-chip" data-style="卡通插画" onclick="selectStyle(this)">🎨 卡通插画</div>
+                  <div class="style-chip" data-style="ins氛围感" onclick="selectStyle(this)">✨ ins氛围感</div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">模型精度</label>
+                <select class="form-select" id="modelLevel">
+                  <option value="lite">Seed-2.0-Lite（快速）</option>
+                  <option value="pro">Seed-2.0-Pro（高精度）</option>
+                </select>
+              </div>
+            </div>
+            <div class="btn-group" style="margin-top:6px">
+              <button class="btn btn-primary" onclick="generateCopy()">
+                <span id="copySpinner" style="display:none" class="spinner"></span>
+                ✨ 生成全套文案
+              </button>
+              <button class="btn btn-secondary" onclick="clearCopyForm()">清空</button>
+            </div>
+          </div>
+
+          <!-- 商品图片（视觉识图） -->
+          <div class="card">
+            <div class="card-title"><span class="icon">👁️</span>Seed视觉识图（可选）</div>
+            <p style="font-size:12px;color:var(--t3);margin-bottom:10px">上传商品图，AI自动识别产品细节，无需手动输入卖点</p>
+            <div class="upload-zone" id="visionUpload" onclick="document.getElementById('visionFile').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleVisionDrop(event)">
+              <div class="upload-icon">🖼️</div>
+              <div class="upload-text">点击或拖拽上传商品图</div>
+              <div class="upload-hint">支持 JPG/PNG/WebP，最大10MB</div>
+            </div>
+            <input type="file" id="visionFile" accept="image/*" style="display:none" onchange="handleVisionUpload(this)">
+            <div id="visionPreview" class="upload-preview"></div>
+            <button class="btn btn-ghost btn-sm" id="analyzeBtn" style="margin-top:10px;display:none" onclick="analyzeImage()">🔍 AI识别商品信息</button>
+            <div id="visionResult" class="result-panel" style="display:none"></div>
+          </div>
+        </div>
+
+        <!-- 生成结果区 -->
+        <div>
+          <!-- 短标题 -->
+          <div class="card">
+            <div class="card-title"><span class="icon">🏷️</span>短标题文案</div>
+            <div id="titlesResult" class="result-panel">
+              <div class="empty-state"><p>生成后显示</p></div>
+            </div>
+          </div>
+
+          <!-- 口播文案 -->
+          <div class="card">
+            <div class="card-title"><span class="icon">🎙️</span>短视频口播文案</div>
+            <div id="scriptResult" class="result-panel">
+              <div class="empty-state"><p>生成后显示</p></div>
+            </div>
+          </div>
+
+          <!-- 分镜提示词 -->
+          <div class="card">
+            <div class="card-title"><span class="icon">🎞️</span>Seedance分镜提示词</div>
+            <div id="storyboardResult" class="result-panel">
+              <div class="empty-state"><p>生成后显示</p></div>
+            </div>
+            <div class="btn-group" style="margin-top:10px">
+              <button class="btn btn-sm btn-primary" id="useForVideoBtn" style="display:none" onclick="useCopyForVideo()">🎬 使用此文案生成视频</button>
+              <button class="btn btn-sm btn-secondary" id="copyPromptBtn" style="display:none" onclick="copySeedancePrompt()">📋 复制提示词</button>
+            </div>
+          </div>
+
+          <!-- 标签 -->
+          <div class="card" id="tagsCard" style="display:none">
+            <div class="card-title"><span class="icon">🔖</span>智能标签&关键词</div>
+            <div id="tagsResult"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== Module 2: 图片&视频生成 ========== -->
+    <div class="module" id="mod-video">
+      <div class="grid-2">
+        <div>
+          <!-- 图片上传 -->
+          <div class="card">
+            <div class="card-title"><span class="icon">🖼️</span>图片上传</div>
+            <p style="font-size:12px;color:var(--t3);margin-bottom:10px">上传商品图作为视频首帧，可选上传尾帧图实现双帧约束</p>
+            
+            <!-- 首帧图 -->
+            <div class="form-label" style="margin-bottom:6px">首帧图（必填）</div>
+            <div class="upload-zone" id="startFrameUpload" onclick="document.getElementById('startFrameFile').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleStartFrameDrop(event)">
+              <div class="upload-icon">🎬</div>
+              <div class="upload-text">点击上传视频起始帧图片</div>
+              <div class="upload-hint">此图将作为视频第一帧</div>
+            </div>
+            <input type="file" id="startFrameFile" accept="image/*" style="display:none" onchange="handleStartFrameUpload(this)">
+            <div id="startFramePreview" class="upload-preview"></div>
+
+            <!-- 尾帧图 -->
+            <div class="form-label" style="margin-top:14px;margin-bottom:6px">尾帧图（可选 - 双帧约束）</div>
+            <div class="upload-zone" id="endFrameUpload" onclick="document.getElementById('endFrameFile').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleEndFrameDrop(event)">
+              <div class="upload-icon">🏁</div>
+              <div class="upload-text">点击上传视频结束帧图片</div>
+              <div class="upload-hint">AI将生成首尾帧间的连贯运镜</div>
+            </div>
+            <input type="file" id="endFrameFile" accept="image/*" style="display:none" onchange="handleEndFrameUpload(this)">
+            <div id="endFramePreview" class="upload-preview"></div>
+
+            <!-- 备选：图片URL -->
+            <div class="form-label" style="margin-top:14px;margin-bottom:6px">备选：图片URL</div>
+            <div class="image-url-input">
+              <input type="text" class="form-input" id="startFrameUrl" placeholder="或输入首帧图URL">
+              <button class="btn btn-sm btn-secondary" onclick="loadImageFromUrl('start')">加载</button>
+            </div>
+            <div class="image-url-input" style="margin-top:8px">
+              <input type="text" class="form-input" id="endFrameUrl" placeholder="或输入尾帧图URL（可选）">
+              <button class="btn btn-sm btn-secondary" onclick="loadImageFromUrl('end')">加载</button>
+            </div>
+          </div>
+
+          <!-- 视频参数 -->
+          <div class="card">
+            <div class="card-title"><span class="icon">⚙️</span>画面参数</div>
+            
+            <div class="form-group">
+              <label class="form-label">视频比例</label>
+              <div class="grid-3">
+                <div class="option-card active" data-ratio="9:16" onclick="selectOption(this,'ratio')">
+                  <div class="opt-label">9:16</div>
+                  <div class="opt-desc">抖音竖屏</div>
+                </div>
+                <div class="option-card" data-ratio="1:1" onclick="selectOption(this,'ratio')">
+                  <div class="opt-label">1:1</div>
+                  <div class="opt-desc">淘宝主图</div>
+                </div>
+                <div class="option-card" data-ratio="16:9" onclick="selectOption(this,'ratio')">
+                  <div class="opt-label">16:9</div>
+                  <div class="opt-desc">详情横版</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">视频时长</label>
+              <div class="grid-3" style="grid-template-columns:repeat(4,1fr)">
+                <div class="option-card active" data-duration="5" onclick="selectOption(this,'duration')">
+                  <div class="opt-label">5秒</div>
+                </div>
+                <div class="option-card" data-duration="8" onclick="selectOption(this,'duration')">
+                  <div class="opt-label">8秒</div>
+                </div>
+                <div class="option-card" data-duration="10" onclick="selectOption(this,'duration')">
+                  <div class="opt-label">10秒</div>
+                </div>
+                <div class="option-card" data-duration="15" onclick="selectOption(this,'duration')">
+                  <div class="opt-label">15秒</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">视频引擎</label>
+              <div class="grid-3" style="grid-template-columns:1fr 1fr">
+                <div class="option-card active" data-provider="grok" onclick="selectOption(this,'provider')">
+                  <div class="opt-label">Grok Video</div>
+                  <div class="opt-desc">xAI Grok-Video-3</div>
+                </div>
+                <div class="option-card" data-provider="seedance" onclick="selectOption(this,'provider')">
+                  <div class="opt-label">Seedance 2.0</div>
+                  <div class="opt-desc">火山方舟</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">清晰度</label>
+              <div class="grid-3" style="grid-template-columns:1fr 1fr">
+                <div class="option-card active" data-quality="standard" onclick="selectOption(this,'quality')">
+                  <div class="opt-label">720P 标准版</div>
+                  <div class="opt-desc">10秒视频</div>
+                </div>
+                <div class="option-card" data-quality="fast" onclick="selectOption(this,'quality')">
+                  <div class="opt-label">480P 极速版</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">视频提示词</label>
+              <textarea class="form-textarea" id="videoPrompt" placeholder="描述视频画面：商品展示、特效、转场等" rows="4"></textarea>
+            </div>
+
+            <div class="btn-group">
+              <button class="btn btn-primary" id="createVideoBtn" onclick="createVideo()">
+                <span id="videoSpinner" style="display:none" class="spinner"></span>
+                🎬 生成视频
+              </button>
+            </div>
+          </div>
+
+          <!-- CORS提示 -->
+          <div class="cors-notice" id="corsNotice">
+            ⚠️ 如果API调用失败，可能是跨域问题。请尝试：
+            <br>1. 安装 CORS 浏览器扩展（如"CORS Unblock"）
+            <br>2. 或使用支持CORS的API代理服务
+          </div>
+        </div>
+
+        <!-- 视频结果 -->
+        <div>
+          <!-- 生成进度 -->
+          <div class="card" id="videoProgressCard" style="display:none">
+            <div class="card-title"><span class="icon">⏳</span>生成进度</div>
+            <div class="progress-bar"><div class="progress-fill" id="videoProgressFill"></div></div>
+            <div class="progress-text" id="videoProgressText">准备中...</div>
+            <div style="font-size:11px;color:var(--t3);margin-top:8px" id="videoTaskInfo"></div>
+          </div>
+
+          <!-- 视频结果 -->
+          <div class="card" id="videoResultCard" style="display:none">
+            <div class="card-title"><span class="icon">✅</span>视频生成完成</div>
+            <div class="video-result">
+              <video id="videoPlayer" controls></video>
+              <div class="video-actions">
+                <a class="btn btn-primary" id="videoDownloadBtn" download="视频.mp4">⬇️ 下载视频</a>
+                <button class="btn btn-secondary" onclick="document.getElementById('videoPlayer').play()">▶️ 播放</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 错误提示 -->
+          <div class="card" id="videoErrorCard" style="display:none">
+            <div class="card-title"><span class="icon" style="color:var(--red)">❌</span>生成失败</div>
+            <div class="result-panel">
+              <div class="result-body" id="videoErrorMsg" style="color:var(--red)"></div>
+            </div>
+            <div class="btn-group" style="margin-top:12px">
+              <button class="btn btn-primary" onclick="autoRetry()">🔄 AI自动修复重试</button>
+              <button class="btn btn-secondary" onclick="retryWithNewPrompt()">✏️ 手动修改提示词</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== Module 3: 高阶功能 ========== -->
+    <div class="module" id="mod-advanced">
+      <div class="grid-2">
+        <div>
+          <!-- 竞品分析 -->
+          <div class="card">
+            <div class="card-title"><span class="icon">📊</span>竞品分析</div>
+            <div class="form-group">
+              <label class="form-label">我们的商品名称</label>
+              <input type="text" class="form-input" id="compProductName" placeholder="商品名称">
+            </div>
+            <div class="form-group">
+              <label class="form-label">我们的卖点</label>
+              <textarea class="form-textarea" id="compOurPoints" placeholder="我们的核心优势"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">竞品内容 <span class="required">*</span></label>
+              <textarea class="form-textarea" id="compContent" placeholder="粘贴竞品的短视频文案、标题、口播内容等" rows="4"></textarea>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-primary" onclick="competitorAnalysis()">
+                <span id="compSpinner" style="display:none" class="spinner"></span>
+                📊 分析并生成差异化脚本
+              </button>
+            </div>
+            <div id="compResult" class="result-panel" style="display:none"></div>
+          </div>
+
+          <!-- 长分镜脚本 -->
+          <div class="card">
+            <div class="card-title"><span class="icon">🎞️</span>长分镜脚本</div>
+            <div class="form-group">
+              <label class="form-label">商品名称</label>
+              <input type="text" class="form-input" id="longProductName" placeholder="商品名称">
+            </div>
+            <div class="form-group">
+              <label class="form-label">核心卖点</label>
+              <textarea class="form-textarea" id="longSellingPoints" placeholder="卖点描述"></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">风格</label>
+                <select class="form-select" id="longStyle">
+                  <option value="写实带货">📸 写实带货</option>
+                  <option value="故事叙事">🎭 故事叙事</option>
+                  <option value="产品特写">📷 产品特写</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">分镜数量</label>
+                <select class="form-select" id="segmentCount">
+                  <option value="3">3段</option>
+                  <option value="4" selected>4段</option>
+                  <option value="5">5段</option>
+                  <option value="6">6段</option>
+                </select>
+              </div>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-primary" onclick="generateLongScript()">
+                <span id="longSpinner" style="display:none" class="spinner"></span>
+                🎬 生成分镜脚本
+              </button>
+            </div>
+            <div id="longResult" class="result-panel" style="display:none"></div>
+          </div>
+        </div>
+
+        <div>
+          <!-- 标签提取 -->
+          <div class="card">
+            <div class="card-title"><span class="icon">🏷️</span>标签提取</div>
+            <div class="form-group">
+              <label class="form-label">商品名称</label>
+              <input type="text" class="form-input" id="tagProductName" placeholder="商品名称">
+            </div>
+            <div class="form-group">
+              <label class="form-label">商品描述</label>
+              <textarea class="form-textarea" id="tagText" placeholder="输入商品描述或已有文案"></textarea>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-primary" onclick="extractTags()">🏷️ 提取标签</button>
+            </div>
+            <div id="tagResult" class="result-panel" style="display:none"></div>
+          </div>
+
+          <!-- 批量生成 -->
+          <div class="card">
+            <div class="card-title"><span class="icon">📦</span>批量文案生成</div>
+            <p style="font-size:12px;color:var(--t3);margin-bottom:10px">每行一个商品，格式：商品名称|卖点|品类（可选）</p>
+            <textarea class="form-textarea batch-input" id="batchInput" placeholder="iPhone 16 Pro|最新A18芯片|数码3C
+小米手环9|长续航心率监测|智能穿戴
+SK-II神仙水|护肤精华水|美妆个护"></textarea>
+            <div class="btn-group" style="margin-top:12px">
+              <button class="btn btn-primary" onclick="batchGenerate()">
+                <span id="batchSpinner" style="display:none" class="spinner"></span>
+                📦 批量生成
+              </button>
+            </div>
+            <div id="batchResult" class="result-panel" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== Module 4: 生成结果 ========== -->
+    <div class="module" id="mod-results">
+      <div class="card">
+        <div class="card-title"><span class="icon">📦</span>全部生成结果</div>
+        <p style="font-size:12px;color:var(--t3)">在这里查看和管理所有已生成的文案和视频</p>
+        <div id="allResults" class="result-panel">
+          <div class="empty-state"><div class="empty-icon">📦</div><p>暂无生成记录<br>请先使用上方功能生成内容</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== Module 5: 历史记录 ========== -->
+    <div class="module" id="mod-history">
+      <div class="card">
+        <div class="card-title"><span class="icon">📋</span>视频生成历史</div>
+        <div class="btn-group" style="margin-bottom:16px">
+          <button class="btn btn-secondary btn-sm" onclick="loadHistory()">🔄 刷新</button>
+          <button class="btn btn-danger btn-sm" onclick="clearHistory()">🗑️ 清空全部</button>
+        </div>
+        <div id="historyList">
+          <div class="empty-state"><div class="empty-icon">📋</div><p>暂无历史记录</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">⚙️ API设置</div>
+      <button class="modal-close" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- 火山方舟设置 -->
+      <div class="settings-section">
+        <div class="settings-section-title">🌋 火山方舟（文本/多模态/Seedance视频）</div>
+        <div class="settings-item">
+          <label>Bearer Token</label>
+          <div class="password-wrapper">
+            <input type="password" id="volcToken" placeholder="ark-xxxxxxxxxx">
+            <button class="password-toggle" onclick="togglePassword('volcToken')">👁️</button>
+          </div>
+          <div class="settings-hint">火山方舟 API 密钥，用于文本生成和多模态识别</div>
+        </div>
+        <div class="settings-item">
+          <label>Doubao-Seed-Lite 模型ID</label>
+          <input type="text" id="volcLiteModel" placeholder="doubao-seed-2-0-lite-260215">
+        </div>
+        <div class="settings-item">
+          <label>Doubao-Seed-Pro 模型ID</label>
+          <input type="text" id="volcProModel" placeholder="doubao-seed-2-0-pro-260215">
+        </div>
+        <div class="settings-item">
+          <label>Seedance 视频模型ID</label>
+          <input type="text" id="seedanceModel" placeholder="doubao-seedance-2-0-260128">
+        </div>
+      </div>
+
+      <!-- Grok设置 -->
+      <div class="settings-section">
+        <div class="settings-section-title">✨ Grok Video（备选视频引擎）</div>
+        <div class="settings-item">
+          <label>Grok API Key</label>
+          <div class="password-wrapper">
+            <input type="password" id="grokApiKey" placeholder="sk-xxxxxxxxxx">
+            <button class="password-toggle" onclick="togglePassword('grokApiKey')">👁️</button>
+          </div>
+          <div class="settings-hint">xAI Grok API 密钥</div>
+        </div>
+        <div class="settings-item">
+          <label>Grok Base URL</label>
+          <input type="text" id="grokBaseUrl" placeholder="https://llm-api.net/v1">
+          <div class="settings-hint">Grok API 服务地址（末尾不要带/）</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeSettings()">取消</button>
+      <button class="btn btn-primary" onclick="saveSettings()">💾 保存设置</button>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner" style="width:32px;height:32px"></div>
+  <div class="loading-text" id="loadingText">处理中...</div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ============ 全局状态 ============
+const State = {
+  // 当前设置
+  settings: {
+    volcToken: '',
+    volcLiteModel: 'doubao-seed-2-0-lite-260215',
+    volcProModel: 'doubao-seed-2-0-pro-260215',
+    seedanceModel: 'doubao-seedance-2-0-260128',
+    grokApiKey: '',
+    grokBaseUrl: 'https://llm-api.net/v1'
+  },
+  // 运行时状态
+  style: '写实带货',
+  ratio: '9:16',
+  duration: '5',
+  provider: 'grok',
+  quality: 'standard',
+  // 图片
+  visionImageUrl: null,
+  startFrameUrl: null,
+  endFrameUrl: null,
+  // 文案结果
+  generatedCopy: null,
+  // 竞品分析结果
+  competitorScripts: null,
+  // 长脚本结果
+  longSegments: null,
+  // 当前视频任务
+  currentVideoTaskId: null,
+  pollingTimer: null,
+  // 历史记录
+  history: []
+};
+
+// ============ 初始化 ============
+document.addEventListener('DOMContentLoaded', () => {
+  loadSettings();
+  loadHistory();
+  updateApiStatus();
+});
+
+// ============ 设置面板 ============
+function openSettings() {
+  document.getElementById('settingsModal').classList.add('active');
+  // 填充当前设置
+  document.getElementById('volcToken').value = State.settings.volcToken;
+  document.getElementById('volcLiteModel').value = State.settings.volcLiteModel;
+  document.getElementById('volcProModel').value = State.settings.volcProModel;
+  document.getElementById('seedanceModel').value = State.settings.seedanceModel;
+  document.getElementById('grokApiKey').value = State.settings.grokApiKey;
+  document.getElementById('grokBaseUrl').value = State.settings.grokBaseUrl;
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('active');
+}
+
+function saveSettings() {
+  State.settings.volcToken = document.getElementById('volcToken').value.trim();
+  State.settings.volcLiteModel = document.getElementById('volcLiteModel').value.trim() || 'doubao-seed-2-0-lite-260215';
+  State.settings.volcProModel = document.getElementById('volcProModel').value.trim() || 'doubao-seed-2-0-pro-260215';
+  State.settings.seedanceModel = document.getElementById('seedanceModel').value.trim() || 'doubao-seedance-2-0-260128';
+  State.settings.grokApiKey = document.getElementById('grokApiKey').value.trim();
+  State.settings.grokBaseUrl = document.getElementById('grokBaseUrl').value.trim() || 'https://llm-api.net/v1';
+  
+  localStorage.setItem('aiVideoSettings', JSON.stringify(State.settings));
+  updateApiStatus();
+  closeSettings();
+  toast('设置已保存', 'success');
+}
+
+function loadSettings() {
+  const saved = localStorage.getItem('aiVideoSettings');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      State.settings = { ...State.settings, ...parsed };
+    } catch(e) {}
+  }
+}
+
+function togglePassword(inputId) {
+  const input = document.getElementById(inputId);
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function updateApiStatus() {
+  const dot = document.getElementById('apiStatusDot');
+  const text = document.getElementById('apiStatusText');
+  if (State.settings.volcToken) {
+    dot.className = 'config-dot connected';
+    text.textContent = 'API已配置';
+  } else {
+    dot.className = 'config-dot disconnected';
+    text.textContent = '请先在设置中配置API';
+  }
+}
+
+// ============ Toast提示 ============
+function toast(message, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = message;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ============ Loading遮罩 ============
+function showLoading(text = '处理中...') {
+  document.getElementById('loadingText').textContent = text;
+  document.getElementById('loadingOverlay').classList.add('active');
+}
+
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+// ============ Tab切换 ============
+function switchModule(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+  document.querySelector(`.tab[onclick*="${name}"]`).classList.add('active');
+  document.getElementById(`mod-${name}`).classList.add('active');
+}
+
+// ============ 通用工具 ============
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    toast('已复制到剪贴板', 'success');
+  });
+}
+
+function formatTime(isoString) {
+  if (!isoString) return '';
+  const d = new Date(isoString);
+  return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function selectStyle(el) {
+  document.querySelectorAll('.style-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  State.style = el.dataset.style;
+}
+
+function selectOption(el, type) {
+  const parent = el.parentElement;
+  parent.querySelectorAll('.option-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  State[type] = el.dataset[type];
+}
+
+// ============ API调用（前端直接调用） ============
+async function volcAPI(model, messages, extra = {}) {
+  const token = State.settings.volcToken;
+  if (!token) throw new Error('请先在设置中配置火山方舟Bearer Token');
+  
+  const url = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature: extra.temperature || 0.8,
+      max_tokens: extra.max_tokens || 2000,
+      response_format: extra.response_format || { type: 'json_object' }
+    })
+  });
+  
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API错误: ${res.status}`);
+  }
+  
+  return res.json();
+}
+
+async function grokVideoAPI(endpoint, body, method = 'POST') {
+  const apiKey = State.settings.grokApiKey;
+  const baseUrl = State.settings.grokBaseUrl;
+  if (!apiKey) throw new Error('请先在设置中配置Grok API Key');
+  if (!baseUrl) throw new Error('请先在设置中配置Grok Base URL');
+  
+  const url = `${baseUrl}${endpoint}`;
+  const headers = {
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type': 'application/json'
+  };
+  
+  const res = await fetch(url, {
+    method,
+    headers,
+    body: method === 'POST' ? JSON.stringify(body) : undefined
+  });
+  
+  const data = await res.json();
+  if (data.error) {
+    throw new Error(data.error.message || 'Grok API请求失败');
+  }
+  
+  return data;
+}
+
+// ============ 图片处理 ============
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImageFromUrl(type) {
+  const url = document.getElementById(type === 'start' ? 'startFrameUrl' : 'endFrameUrl').value.trim();
+  if (!url) return toast('请输入图片URL', 'error');
+  
+  if (type === 'start') {
+    State.startFrameUrl = url;
+    document.getElementById('startFramePreview').innerHTML =
+      `<div class="upload-thumb"><img src="${url}"><div class="label">首帧图</div><button class="remove" onclick="removeStartFrame()">✕</button></div>`;
+  } else {
+    State.endFrameUrl = url;
+    document.getElementById('endFramePreview').innerHTML =
+      `<div class="upload-thumb"><img src="${url}"><div class="label">尾帧图</div><button class="remove" onclick="removeEndFrame()">✕</button></div>`;
+  }
+  toast('图片已加载', 'success');
+}
+
+// ============ Module 1: AI文案生成 ============
+async function generateCopy() {
+  const productName = document.getElementById('productName').value.trim();
+  if (!productName) return toast('请输入商品名称', 'error');
+  
+  const btn = event.target.closest('.btn');
+  const spinner = document.getElementById('copySpinner');
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+  
+  try {
+    const modelLevel = document.getElementById('modelLevel').value;
+    const model = modelLevel === 'pro' ? State.settings.volcProModel : State.settings.volcLiteModel;
+    
+    const systemPrompt = `你是一位顶级电商短视频策划专家，擅长为商品创作爆款带货内容。你需要基于商品信息生成以下三类文案：
+
+1. **短标题文案**：适合抖音商品标题、搜索关键词、短视频封面，15字以内，要有网感和搜索流量思维
+2. **短视频口播文案**：15秒内真人带货台词，要口语化、有节奏感、有钩子开头，适合真人出镜或虚拟主播配音
+3. **Seedance分镜提示词**：标准镜头脚本，包含分秒级运镜描述、画面内容、背景音乐建议、镜头起止帧说明。格式要求：
+   - 每个镜头标注时间范围
+   - 运镜方式（推/拉/摇/移/固定）
+   - 画面主体动作描述
+   - 光影和氛围说明
+   - 必须可直接作为Seedance图生视频的prompt使用
+
+${State.style ? `画风要求：${State.style}` : ''}
+${State.visionAnalysis ? `\n商品图片识别信息：${State.visionAnalysis}\n请结合图片中的产品细节来创作文案。` : ''}
+
+请严格按以下JSON格式输出，不要输出其他内容：
+{
+  "titles": ["标题1", "标题2", "标题3"],
+  "script": "口播文案内容",
+  "storyboard": "分镜脚本内容，包含时间轴、运镜、画面描述",
+  "seedance_prompt": "直接适配Seedance图生视频的英文提示词，描述画面运动和变化",
+  "tags": ["标签1", "标签2", "标签3", "标签4", "标签5"],
+  "keywords": ["关键词1", "关键词2", "关键词3"]
+}`;
+
+    const userPrompt = `商品名称：${productName}
+${document.getElementById('sellingPoints').value ? `核心卖点：${document.getElementById('sellingPoints').value}` : ''}
+${document.getElementById('category').value ? `品类：${document.getElementById('category').value}` : ''}
+${document.getElementById('scenario').value ? `适用场景：${document.getElementById('scenario').value}` : ''}`;
+
+    const data = await volcAPI(model, [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ], {
+      temperature: 0.8,
+      max_tokens: 2000
+    });
+
+    const content = data.choices?.[0]?.message?.content || '';
+    let parsed;
+    try {
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(jsonMatch ? jsonMatch[0] : content);
+    } catch(e) {
+      parsed = { raw: content };
+    }
+
+    State.generatedCopy = parsed;
+    renderCopyResults(parsed);
+    toast('文案生成完成', 'success');
+  } catch(e) {
+    if (e.message.includes('CORS') || e.message.includes('Failed to fetch')) {
+      document.getElementById('corsNotice').classList.add('show');
+    }
+    toast('生成失败：' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+  }
+}
+
+function renderCopyResults(data) {
+  // 标题
+  const titlesEl = document.getElementById('titlesResult');
+  if (data.titles && data.titles.length) {
+    titlesEl.innerHTML = data.titles.map((t, i) =>
+      `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;${i>0?'border-top:1px solid var(--border)':''}">
+        <span class="tag">${i+1}</span>
+        <span style="flex:1" contenteditable="true" class="result-body editable">${t}</span>
+        <button class="btn btn-sm btn-secondary" onclick="copyToClipboard('${t.replace(/'/g,"\\'")}')">📋</button>
+      </div>`
+    ).join('');
+  } else if (data.raw) {
+    titlesEl.innerHTML = `<div class="result-body" contenteditable="true">${data.raw}</div>`;
+  }
+
+  // 口播
+  const scriptEl = document.getElementById('scriptResult');
+  if (data.script) {
+    scriptEl.innerHTML = `<div class="result-body" contenteditable="true" id="scriptText">${data.script}</div>
+    <div style="margin-top:8px"><button class="btn btn-sm btn-secondary" onclick="copyToClipboard(document.getElementById('scriptText').textContent)">📋 复制口播</button></div>`;
+  }
+
+  // 分镜
+  const sbEl = document.getElementById('storyboardResult');
+  if (data.storyboard || data.seedance_prompt) {
+    let html = '';
+    if (data.storyboard) {
+      html += `<div style="margin-bottom:10px"><div class="result-title">分镜脚本</div><div class="result-body" contenteditable="true" id="storyboardText" style="font-size:12px">${data.storyboard}</div></div>`;
+    }
+    if (data.seedance_prompt) {
+      html += `<div><div class="result-title">Seedance英文提示词</div><div class="result-body" contenteditable="true" id="seedancePromptText" style="font-size:12px;color:var(--accent2)">${data.seedance_prompt}</div></div>`;
+    }
+    sbEl.innerHTML = html;
+    document.getElementById('useForVideoBtn').style.display = 'inline-flex';
+    document.getElementById('copyPromptBtn').style.display = 'inline-flex';
+  }
+
+  // 标签
+  if (data.tags || data.keywords) {
+    document.getElementById('tagsCard').style.display = 'block';
+    let html = '';
+    if (data.tags) html += `<div style="margin-bottom:8px"><span style="font-size:11px;color:var(--t3)">标签：</span>${data.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>`;
+    if (data.keywords) html += `<div><span style="font-size:11px;color:var(--t3)">搜索关键词：</span>${data.keywords.map(k => `<span class="tag" style="background:rgba(76,158,255,.15);color:var(--blue)">${k}</span>`).join('')}</div>`;
+    document.getElementById('tagsResult').innerHTML = html;
+  }
+}
+
+function clearCopyForm() {
+  document.getElementById('productName').value = '';
+  document.getElementById('sellingPoints').value = '';
+  document.getElementById('category').value = '';
+  document.getElementById('scenario').value = '';
+  State.generatedCopy = null;
+  document.getElementById('titlesResult').innerHTML = '<div class="empty-state"><p>生成后显示</p></div>';
+  document.getElementById('scriptResult').innerHTML = '<div class="empty-state"><p>生成后显示</p></div>';
+  document.getElementById('storyboardResult').innerHTML = '<div class="empty-state"><p>生成后显示</p></div>';
+  document.getElementById('tagsCard').style.display = 'none';
+  document.getElementById('useForVideoBtn').style.display = 'none';
+  document.getElementById('copyPromptBtn').style.display = 'none';
+}
+
+function useCopyForVideo() {
+  const promptEl = document.getElementById('seedancePromptText');
+  const sbEl = document.getElementById('storyboardText');
+  if (promptEl) document.getElementById('videoPrompt').value = promptEl.textContent;
+  if (sbEl) document.getElementById('videoPrompt').value = sbEl.textContent;
+  switchModule('video');
+  toast('文案已同步到视频生成模块', 'success');
+}
+
+function copySeedancePrompt() {
+  const el = document.getElementById('seedancePromptText');
+  if (el) copyToClipboard(el.textContent);
+}
+
+// ============ Seed视觉识图 ============
+async function handleVisionUpload(input) {
+  if (!input.files[0]) return;
+  showLoading('图片上传中...');
+  try {
+    const base64 = await fileToBase64(input.files[0]);
+    State.visionImageUrl = base64;
+    const preview = document.getElementById('visionPreview');
+    preview.innerHTML = `<div class="upload-thumb"><img src="${base64}"><button class="remove" onclick="removeVisionImage()">✕</button></div>`;
+    document.getElementById('analyzeBtn').style.display = 'inline-flex';
+    toast('图片已加载', 'success');
+  } catch(e) {
+    toast('上传失败：' + e.message, 'error');
+  } finally {
+    hideLoading();
+  }
+  input.value = '';
+}
+
+function handleVisionDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('dragover');
+  const dt = e.dataTransfer;
+  if (dt.files.length) {
+    document.getElementById('visionFile').files = dt.files;
+    handleVisionUpload(document.getElementById('visionFile'));
+  }
+}
+
+function removeVisionImage() {
+  State.visionImageUrl = null;
+  State.visionAnalysis = '';
+  document.getElementById('visionPreview').innerHTML = '';
+  document.getElementById('analyzeBtn').style.display = 'none';
+  document.getElementById('visionResult').style.display = 'none';
+}
+
+async function analyzeImage() {
+  if (!State.visionImageUrl) return toast('请先上传图片', 'error');
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  btn.textContent = '🔍 识别中...';
+
+  try {
+    const model = State.settings.volcProModel;
+    const data = await volcAPI(model, [
+      {
+        role: 'system',
+        content: '你是商品图片识别专家，请详细识别图片中的商品信息，包括：产品类型、颜色、款式、材质、适用人群、设计细节、使用场景等。'
+      },
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: '请详细识别这张商品图片中的所有产品信息' },
+          { type: 'image_url', image_url: { url: State.visionImageUrl } }
+        ]
+      }
+    ], {
+      temperature: 0.3,
+      max_tokens: 1000
+    });
+
+    const content = data.choices?.[0]?.message?.content || '';
+    State.visionAnalysis = content;
+    const resultEl = document.getElementById('visionResult');
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = `<div class="result-title">AI识别结果</div><div class="result-body" style="font-size:12px">${content}</div>
+    <button class="btn btn-sm btn-ghost" style="margin-top:8px" onclick="fillFromVision()">📝 自动填入商品信息</button>`;
+    toast('图片识别完成', 'success');
+  } catch(e) {
+    toast('识别失败：' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔍 AI识别商品信息';
+  }
+}
+
+function fillFromVision() {
+  if (!State.visionAnalysis) return;
+  const text = State.visionAnalysis;
+  if (!document.getElementById('sellingPoints').value) {
+    document.getElementById('sellingPoints').value = text.slice(0, 200);
+  }
+  toast('已将识别信息填入卖点', 'success');
+}
+
+// ============ Module 2: 视频 - 图片上传 ============
+async function handleStartFrameUpload(input) {
+  if (!input.files[0]) return;
+  showLoading('图片上传中...');
+  try {
+    const base64 = await fileToBase64(input.files[0]);
+    State.startFrameUrl = base64;
+    document.getElementById('startFramePreview').innerHTML =
+      `<div class="upload-thumb"><img src="${base64}"><div class="label">首帧图</div><button class="remove" onclick="removeStartFrame()">✕</button></div>`;
+    toast('首帧图已加载', 'success');
+  } catch(e) {
+    toast('上传失败', 'error');
+  } finally {
+    hideLoading();
+  }
+  input.value = '';
+}
+
+function handleStartFrameDrop(e) {
+  e.preventDefault(); e.currentTarget.classList.remove('dragover');
+  if (e.dataTransfer.files.length) {
+    document.getElementById('startFrameFile').files = e.dataTransfer.files;
+    handleStartFrameUpload(document.getElementById('startFrameFile'));
+  }
+}
+
+function removeStartFrame() {
+  State.startFrameUrl = null;
+  document.getElementById('startFramePreview').innerHTML = '';
+}
+
+async function handleEndFrameUpload(input) {
+  if (!input.files[0]) return;
+  showLoading('图片上传中...');
+  try {
+    const base64 = await fileToBase64(input.files[0]);
+    State.endFrameUrl = base64;
+    document.getElementById('endFramePreview').innerHTML =
+      `<div class="upload-thumb"><img src="${base64}"><div class="label">尾帧图</div><button class="remove" onclick="removeEndFrame()">✕</button></div>`;
+    toast('尾帧图已加载', 'success');
+  } catch(e) {
+    toast('上传失败', 'error');
+  } finally {
+    hideLoading();
+  }
+  input.value = '';
+}
+
+function handleEndFrameDrop(e) {
+  e.preventDefault(); e.currentTarget.classList.remove('dragover');
+  if (e.dataTransfer.files.length) {
+    document.getElementById('endFrameFile').files = e.dataTransfer.files;
+    handleEndFrameUpload(document.getElementById('endFrameFile'));
+  }
+}
+
+function removeEndFrame() {
+  State.endFrameUrl = null;
+  document.getElementById('endFramePreview').innerHTML = '';
+}
+
+// ============ Module 2: 创建视频 ============
+async function createVideo() {
+  const prompt = document.getElementById('videoPrompt').value.trim();
+  if (!prompt) return toast('请输入视频提示词', 'error');
+  if (!State.startFrameUrl) return toast('请上传首帧图', 'error');
+
+  const btn = document.getElementById('createVideoBtn');
+  const spinner = document.getElementById('videoSpinner');
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+
+  // 清理之前的状态
+  if (State.pollingTimer) clearInterval(State.pollingTimer);
+  document.getElementById('videoResultCard').style.display = 'none';
+  document.getElementById('videoErrorCard').style.display = 'none';
+  document.getElementById('corsNotice').classList.remove('show');
+
+  try {
+    let taskId, provider;
+    
+    if (State.provider === 'grok') {
+      // Grok视频引擎
+      const model = State.quality === 'fast' ? 'grok-video-3' : 'grok-video-3-10s';
+      const videoBody = {
+        model,
+        prompt,
+        aspect_ratio: State.ratio
+      };
+      
+      // Grok支持images数组
+      if (State.startFrameUrl) {
+        videoBody.images = [State.startFrameUrl];
+        if (State.endFrameUrl) videoBody.images.push(State.endFrameUrl);
+      }
+      
+      const data = await grokVideoAPI('/video/create', videoBody);
+      taskId = data.id;
+      provider = 'grok';
+    } else {
+      // Seedance视频引擎
+      const model = State.settings.seedanceModel;
+      const content = [];
+      
+      if (State.startFrameUrl) {
+        content.push({ type: 'image_url', image_url: { url: State.startFrameUrl } });
+      }
+      if (State.endFrameUrl) {
+        content.push({ type: 'image_url', image_url: { url: State.endFrameUrl } });
+      }
+      
+      const resolution = State.quality === 'fast' ? '480p' : '720p';
+      const textPrompt = `${prompt} --rs ${resolution} --rt ${State.ratio} --dur ${State.duration}`;
+      content.push({ type: 'text', text: textPrompt });
+      
+      const videoBody = { model, content };
+      
+      const token = State.settings.volcToken;
+      const res = await fetch('https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(videoBody)
+      });
+      
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `Seedance API错误: ${res.status}`);
+      }
+      
+      const data = await res.json();
+      taskId = data.id || data.task_id || data.request_id;
+      provider = 'seedance';
+    }
+
+    if (!taskId) throw new Error('API未返回任务ID');
+
+    State.currentVideoTaskId = taskId;
+    toast('视频任务已提交，后台生成中...', 'info');
+
+    // 保存到历史
+    saveToHistory({
+      id: taskId,
+      status: 'processing',
+      provider,
+      prompt,
+      imageUrl: State.startFrameUrl,
+      endImageUrl: State.endFrameUrl,
+      ratio: State.ratio,
+      duration: State.duration,
+      quality: State.quality,
+      productName: document.getElementById('productName')?.value || '',
+      createdAt: new Date().toISOString()
+    });
+
+    // 显示进度
+    const progressCard = document.getElementById('videoProgressCard');
+    progressCard.style.display = 'block';
+    document.getElementById('videoTaskInfo').textContent = `任务ID: ${taskId}`;
+
+    // 开始轮询
+    startPolling(taskId, provider);
+  } catch(e) {
+    if (e.message.includes('CORS') || e.message.includes('Failed to fetch')) {
+      document.getElementById('corsNotice').classList.add('show');
+    }
+    toast('提交失败：' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+  }
+}
+
+async function startPolling(taskId, provider) {
+  let elapsed = 0;
+  const totalEstimate = parseInt(State.duration) * 15;
+
+  State.pollingTimer = setInterval(async () => {
+    elapsed += 3;
+    try {
+      let data, status, videoUrl;
+
+      if (provider === 'grok') {
+        // Grok状态查询
+        data = await grokVideoAPI(`/videos/${taskId}`, null, 'GET');
+        status = data.status || 'unknown';
+        if (status === 'completed') {
+          videoUrl = data.video_url || data.metadata?.url || null;
+          status = 'succeeded';
+        }
+      } else {
+        // Seedance状态查询
+        const token = State.settings.volcToken;
+        const res = await fetch(`https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks/${taskId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        data = await res.json();
+        status = data.status || 'unknown';
+        
+        if (status === 'succeeded' || status === 'success') {
+          const content = data.content || data.output || {};
+          videoUrl = content.video_url || content.videos?.[0]?.url || data.result?.video_url || data.data?.video_url;
+        }
+      }
+
+      // 更新进度
+      const progress = Math.min(95, (elapsed / totalEstimate) * 100);
+      document.getElementById('videoProgressFill').style.width = progress + '%';
+      document.getElementById('videoProgressText').textContent = 
+        (status === 'processing' || status === 'pending') ? `生成中... 已等待 ${elapsed}s` : `状态: ${status}`;
+
+      if (status === 'succeeded') {
+        clearInterval(State.pollingTimer);
+        document.getElementById('videoProgressFill').style.width = '100%';
+        document.getElementById('videoProgressText').textContent = '生成完成！';
+
+        if (videoUrl) {
+          const player = document.getElementById('videoPlayer');
+          player.src = videoUrl;
+          document.getElementById('videoDownloadBtn').href = videoUrl;
+          document.getElementById('videoResultCard').style.display = 'block';
+          document.getElementById('videoProgressCard').style.display = 'none';
+          toast('视频生成完成！', 'success');
+          
+          // 更新历史记录
+          updateHistoryStatus(taskId, 'succeeded', videoUrl);
+        } else {
+          toast('视频URL未返回', 'error');
+        }
+        loadHistory();
+      } else if (status === 'failed') {
+        clearInterval(State.pollingTimer);
+        document.getElementById('videoProgressCard').style.display = 'none';
+        document.getElementById('videoErrorCard').style.display = 'block';
+        document.getElementById('videoErrorMsg').textContent = 
+          data.error?.message || data.fail_reason || '视频生成失败，可能是内容审核未通过或参数异常';
+        toast('视频生成失败', 'error');
+        updateHistoryStatus(taskId, 'failed');
+      }
+    } catch(e) {
+      console.error('轮询错误:', e);
+    }
+  }, 3000);
+}
+
+async function autoRetry() {
+  if (!State.currentVideoTaskId) return toast('没有可重试的任务', 'error');
+  const errorReason = document.getElementById('videoErrorMsg').textContent;
+  
+  document.getElementById('videoErrorCard').style.display = 'none';
+  showLoading('AI正在优化提示词并重新生成...');
+
+  try {
+    // 用Seed2.0优化提示词
+    const model = State.settings.volcProModel;
+    const data = await volcAPI(model, [
+      {
+        role: 'system',
+        content: '你是视频生成提示词优化专家。之前的视频生成因内容风控或参数问题失败，请优化提示词，规避敏感内容，调整描述方式，确保能通过审核。直接输出优化后的英文提示词，不要其他内容。'
+      },
+      {
+        role: 'user',
+        content: `原始提示词：${document.getElementById('videoPrompt').value}\n失败原因：${errorReason || '内容审核未通过'}\n请优化提示词使其能成功生成。`
+      }
+    ], {
+      temperature: 0.5,
+      max_tokens: 500
+    });
+
+    const newPrompt = data.choices?.[0]?.message?.content?.trim() || document.getElementById('videoPrompt').value;
+    document.getElementById('videoPrompt').value = newPrompt;
+    hideLoading();
+
+    // 重新创建视频
+    await createVideo();
+    toast('已优化提示词并重新提交', 'info');
+  } catch(e) {
+    hideLoading();
+    toast('重试失败：' + e.message, 'error');
+  }
+}
+
+function retryWithNewPrompt() {
+  document.getElementById('videoErrorCard').style.display = 'none';
+  document.getElementById('videoPrompt').focus();
+  toast('请修改提示词后重新生成', 'info');
+}
+
+// ============ Module 3: 竞品分析 ============
+async function competitorAnalysis() {
+  const content = document.getElementById('compContent').value.trim();
+  if (!content) return toast('请输入竞品内容', 'error');
+
+  const btn = event.target.closest('.btn');
+  const spinner = document.getElementById('compSpinner');
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+
+  try {
+    const model = State.settings.volcProModel;
+    const data = await volcAPI(model, [
+      {
+        role: 'system',
+        content: `你是电商竞品分析专家。分析竞品的短视频内容和卖点策略，然后为我们的商品生成差异化的原创脚本。
+
+要求：
+1. 分析竞品的核心卖点和视频风格
+2. 找出竞品的不足和差异化机会
+3. 生成3套差异化原创短视频脚本（含标题、口播、分镜）
+4. 每套脚本要明确指出与竞品的差异化策略
+
+以JSON格式输出：
+{
+  "competitor_analysis": "竞品分析结论",
+  "differentiation_strategy": "差异化策略",
+  "scripts": [
+    { "title": "标题", "script": "口播文案", "storyboard": "分镜脚本", "seedance_prompt": "Seedance英文提示词", "diff_point": "差异化要点" }
+  ]
+}`
+      },
+      {
+        role: 'user',
+        content: `我们的商品：${document.getElementById('compProductName').value.trim()}\n我们的卖点：${document.getElementById('compOurPoints').value.trim()}\n\n竞品内容：\n${content}`
+      }
+    ], {
+      temperature: 0.7,
+      max_tokens: 3000
+    });
+
+    const respContent = data.choices?.[0]?.message?.content || '';
+    let parsed;
+    try {
+      const jsonMatch = respContent.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(jsonMatch ? jsonMatch[0] : respContent);
+    } catch(e) {
+      parsed = { raw: respContent };
+    }
+
+    const d = parsed;
+    const el = document.getElementById('compResult');
+    el.style.display = 'block';
+
+    let html = '';
+    if (d.competitor_analysis) {
+      html += `<div class="result-panel"><div class="result-title">📊 竞品分析</div><div class="result-body">${d.competitor_analysis}</div></div>`;
+    }
+    if (d.differentiation_strategy) {
+      html += `<div class="result-panel" style="margin-top:10px"><div class="result-title">💡 差异化策略</div><div class="result-body">${d.differentiation_strategy}</div></div>`;
+    }
+    if (d.scripts && d.scripts.length) {
+      html += `<div style="margin-top:12px"><div class="result-title" style="margin-bottom:8px">🎬 差异化脚本</div>`;
+      d.scripts.forEach((s, i) => {
+        html += `<div class="segment-card">
+          <div class="seg-header"><span class="seg-id">${i+1}</span>${s.title || '脚本'+(i+1)} <span class="tag" style="margin-left:auto">${s.diff_point || ''}</span></div>
+          <div style="font-size:12px;color:var(--t2);margin-bottom:6px">${s.script || ''}</div>
+          ${s.seedance_prompt ? `<div style="font-size:11px;color:var(--accent2);background:var(--bg3);padding:8px;border-radius:4px">${s.seedance_prompt}</div>` : ''}
+          <div class="btn-group" style="margin-top:8px">
+            <button class="btn btn-sm btn-ghost" onclick="useCompScript(${i})">🎬 生成视频</button>
+          </div>
+        </div>`;
+      });
+      html += '</div>';
+    }
+    if (d.raw) {
+      html += `<div class="result-panel"><div class="result-body">${d.raw}</div></div>`;
+    }
+    el.innerHTML = html;
+    State.competitorScripts = d.scripts;
+    toast('竞品分析完成', 'success');
+  } catch(e) {
+    toast('分析失败：' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+  }
+}
+
+function useCompScript(index) {
+  if (State.competitorScripts && State.competitorScripts[index]) {
+    const s = State.competitorScripts[index];
+    document.getElementById('videoPrompt').value = s.seedance_prompt || s.script || '';
+    switchModule('video');
+    toast('脚本已同步到视频生成', 'success');
+  }
+}
+
+// ============ Module 3: 长分镜 ============
+async function generateLongScript() {
+  const name = document.getElementById('longProductName').value.trim();
+  if (!name) return toast('请输入商品名称', 'error');
+
+  const spinner = document.getElementById('longSpinner');
+  spinner.style.display = 'inline-block';
+
+  try {
+    const model = State.settings.volcProModel;
+    const segmentCount = parseInt(document.getElementById('segmentCount').value);
+    const data = await volcAPI(model, [
+      {
+        role: 'system',
+        content: `你是高端品牌短视频策划专家。为商品生成专业级多段分镜长脚本。
+
+要求：
+1. 生成${segmentCount}段独立短视频脚本
+2. 每段时长5-10秒，各段风格统一但内容递进
+3. 包含完整的运镜、画面、音乐说明
+4. 每段可独立使用，也可拼接成完整品牌片
+5. 提供每段的Seedance英文提示词
+
+以JSON格式输出：
+{
+  "brand_theme": "品牌主题",
+  "overall_style": "整体风格描述",
+  "segments": [
+    {
+      "segment_id": 1,
+      "duration": "5s",
+      "title": "段落标题",
+      "script": "口播文案",
+      "storyboard": "详细分镜描述",
+      "seedance_prompt": "Seedance英文提示词",
+      "transition": "与下段衔接方式"
+    }
+  ]
+}`
+      },
+      {
+        role: 'user',
+        content: `商品：${name}\n卖点：${document.getElementById('longSellingPoints').value.trim()}\n风格：${document.getElementById('longStyle').value}`
+      }
+    ], {
+      temperature: 0.7,
+      max_tokens: 4000
+    });
+
+    const respContent = data.choices?.[0]?.message?.content || '';
+    let parsed;
+    try {
+      const jsonMatch = respContent.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(jsonMatch ? jsonMatch[0] : respContent);
+    } catch(e) {
+      parsed = { raw: respContent };
+    }
+
+    const d = parsed;
+    const el = document.getElementById('longResult');
+    el.style.display = 'block';
+
+    let html = '';
+    if (d.brand_theme) html += `<div class="result-title" style="margin-bottom:4px">🎯 品牌主题：${d.brand_theme}</div>`;
+    if (d.overall_style) html += `<div style="font-size:12px;color:var(--t2);margin-bottom:12px">整体风格：${d.overall_style}</div>`;
+
+    if (d.segments && d.segments.length) {
+      d.segments.forEach(seg => {
+        html += `<div class="segment-card">
+          <div class="seg-header"><span class="seg-id">${seg.segment_id || '?'}</span>${seg.title || ''} <span class="tag" style="margin-left:8px">${seg.duration || ''}</span></div>
+          <div style="font-size:12px;margin-bottom:6px"><strong>口播：</strong>${seg.script || ''}</div>
+          <div style="font-size:12px;color:var(--t2);margin-bottom:6px"><strong>分镜：</strong>${seg.storyboard || ''}</div>
+          <div style="font-size:11px;color:var(--accent2);background:var(--bg3);padding:8px;border-radius:4px;margin-bottom:6px"><strong>Seedance Prompt:</strong><br>${seg.seedance_prompt || ''}</div>
+          ${seg.transition ? `<div style="font-size:11px;color:var(--t3)">衔接：${seg.transition}</div>` : ''}
+          <button class="btn btn-sm btn-ghost" style="margin-top:8px" onclick="useLongSegment(${seg.segment_id || 0})">🎬 生成此段视频</button>
+        </div>`;
+      });
+    }
+    if (d.raw) html += `<div class="result-body">${d.raw}</div>`;
+
+    el.innerHTML = html;
+    State.longSegments = d.segments;
+    toast('长脚本生成完成', 'success');
+  } catch(e) {
+    toast('生成失败：' + e.message, 'error');
+  } finally {
+    spinner.style.display = 'none';
+  }
+}
+
+function useLongSegment(id) {
+  if (State.longSegments) {
+    const seg = State.longSegments.find(s => s.segment_id === id) || State.longSegments[id];
+    if (seg) {
+      document.getElementById('videoPrompt').value = seg.seedance_prompt || '';
+      switchModule('video');
+      toast('段落已同步到视频生成', 'success');
+    }
+  }
+}
+
+// ============ Module 3: 标签提取 ============
+async function extractTags() {
+  const name = document.getElementById('tagProductName').value.trim();
+  const text = document.getElementById('tagText').value.trim();
+  if (!name && !text) return toast('请输入商品名称或描述', 'error');
+
+  try {
+    const model = State.settings.volcLiteModel;
+    const data = await volcAPI(model, [
+      {
+        role: 'system',
+        content: '从商品信息中提取短视频标签、搜索关键词和带货分类标签。JSON格式输出：{"tags":["标签1","标签2","标签3","标签4","标签5"],"keywords":["关键词1","关键词2","关键词3"],"categories":["分类1","分类2"]}'
+      },
+      { role: 'user', content: `商品：${name}\n内容：${text}` }
+    ], {
+      temperature: 0.3,
+      max_tokens: 300
+    });
+
+    const respContent = data.choices?.[0]?.message?.content || '';
+    let parsed;
+    try {
+      const jsonMatch = respContent.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(jsonMatch ? jsonMatch[0] : respContent);
+    } catch(e) {
+      parsed = { raw: respContent };
+    }
+
+    const d = parsed;
+    const el = document.getElementById('tagResult');
+    el.style.display = 'block';
+
+    let html = '';
+    if (d.tags) html += `<div style="margin-bottom:6px"><span style="font-size:11px;color:var(--t3)">标签：</span>${d.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>`;
+    if (d.keywords) html += `<div style="margin-bottom:6px"><span style="font-size:11px;color:var(--t3)">关键词：</span>${d.keywords.map(k => `<span class="tag" style="background:rgba(76,158,255,.15);color:var(--blue)">${k}</span>`).join('')}</div>`;
+    if (d.categories) html += `<div><span style="font-size:11px;color:var(--t3)">分类：</span>${d.categories.map(c => `<span class="tag" style="background:rgba(0,212,160,.1);color:var(--green)">${c}</span>`).join('')}</div>`;
+    el.innerHTML = html;
+    toast('标签提取完成', 'success');
+  } catch(e) {
+    toast('提取失败：' + e.message, 'error');
+  }
+}
+
+// ============ Module 3: 批量生成 ============
+async function batchGenerate() {
+  const input = document.getElementById('batchInput').value.trim();
+  if (!input) return toast('请输入商品清单', 'error');
+
+  const spinner = document.getElementById('batchSpinner');
+  spinner.style.display = 'inline-block';
+
+  try {
+    const lines = input.split('\n').filter(l => l.trim());
+    const products = lines.map(line => {
+      const parts = line.split('|');
+      return { name: parts[0]?.trim(), sellingPoints: parts[1]?.trim(), category: parts[2]?.trim() };
+    });
+
+    const results = [];
+    const model = State.settings.volcLiteModel;
+
+    // 逐个生成（串行）
+    for (const p of products.slice(0, 20)) {
+      try {
+        const data = await volcAPI(model, [
+          {
+            role: 'system',
+            content: '为商品快速生成短视频文案。JSON格式输出：{"title":"商品标题","script":"15秒口播","seedance_prompt":"英文视频提示词","tags":["标签1","标签2","标签3"]}'
+          },
+          {
+            role: 'user',
+            content: `商品：${p.name}，卖点：${p.sellingPoints || ''}，品类：${p.category || ''}${State.style ? '，风格：' + State.style : ''}`
+          }
+        ], {
+          temperature: 0.7,
+          max_tokens: 500
+        });
+
+        const respContent = data.choices?.[0]?.message?.content || '';
+        let parsed;
+        try {
+          const jsonMatch = respContent.match(/\{[\s\S]*\}/);
+          parsed = JSON.parse(jsonMatch ? jsonMatch[0] : respContent);
+        } catch(e) {
+          parsed = { error: '解析失败' };
+        }
+        results.push({ product: p.name, ...parsed });
+      } catch(e) {
+        results.push({ product: p.name, error: e.message });
+      }
+    }
+
+    const el = document.getElementById('batchResult');
+    el.style.display = 'block';
+
+    let html = `<div style="font-size:12px;color:var(--t2);margin-bottom:8px">已生成 ${results.length} 条文案</div>`;
+    results.forEach((r, i) => {
+      if (r.error) {
+        html += `<div class="segment-card" style="border-color:rgba(255,92,108,.3)"><strong style="color:var(--red)">${r.product}</strong>: ${r.error}</div>`;
+      } else {
+        html += `<div class="segment-card">
+          <div class="seg-header"><span class="seg-id">${i+1}</span>${r.title || r.product}</div>
+          <div style="font-size:12px;color:var(--t2);margin-bottom:4px">${r.script || ''}</div>
+          ${r.seedance_prompt ? `<div style="font-size:11px;color:var(--accent2);background:var(--bg3);padding:6px;border-radius:4px;margin-bottom:4px">${r.seedance_prompt}</div>` : ''}
+          ${r.tags ? `<div>${r.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
+        </div>`;
+      }
+    });
+    el.innerHTML = html;
+    toast(`批量生成完成，${results.length} 条`, 'success');
+  } catch(e) {
+    toast('批量生成失败：' + e.message, 'error');
+  } finally {
+    spinner.style.display = 'none';
+  }
+}
+
+// ============ 历史记录（localStorage） ============
+const MAX_HISTORY = 50;
+
+function loadHistory() {
+  try {
+    State.history = JSON.parse(localStorage.getItem('aiVideoHistory') || '[]');
+  } catch(e) {
+    State.history = [];
+  }
+  renderHistory();
+}
+
+function saveToHistory(record) {
+  State.history.unshift(record);
+  if (State.history.length > MAX_HISTORY) {
+    State.history = State.history.slice(0, MAX_HISTORY);
+  }
+  localStorage.setItem('aiVideoHistory', JSON.stringify(State.history));
+}
+
+function updateHistoryStatus(taskId, status, videoUrl) {
+  const record = State.history.find(h => h.id === taskId);
+  if (record) {
+    record.status = status;
+    if (videoUrl) record.videoUrl = videoUrl;
+    record.updatedAt = new Date().toISOString();
+    localStorage.setItem('aiVideoHistory', JSON.stringify(State.history));
+  }
+}
+
+function renderHistory() {
+  const el = document.getElementById('historyList');
+  if (!State.history.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>暂无历史记录</p></div>';
+    return;
+  }
+
+  el.innerHTML = State.history.map(h => `
+    <div class="history-item">
+      <div class="history-thumb">${h.imageUrl ? `<img src="${h.imageUrl}" onerror="this.parentElement.innerHTML='<div style=display:flex;align-items:center;justify-content:center;height:100%;font-size:20px>🎬</div>'">` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:20px">🎬</div>'}</div>
+      <div class="history-info">
+        <div class="history-name">${h.productName || h.prompt?.slice(0,30) || '视频任务'}</div>
+        <div class="history-meta">
+          <span class="status-dot ${h.status}"></span>${h.status === 'succeeded' ? '已完成' : h.status === 'failed' ? '失败' : '处理中'}
+          · ${h.provider === 'grok' ? 'Grok' : 'Seedance'} · ${h.duration || ''}s · ${formatTime(h.createdAt)}
+        </div>
+      </div>
+      <div class="history-actions">
+        ${h.videoUrl ? `<a class="btn btn-sm btn-primary" href="${h.videoUrl}" download target="_blank">⬇️</a>` : ''}
+        ${h.status === 'failed' ? `<button class="btn btn-sm btn-ghost" onclick="retryFromHistory('${h.id}')">🔄</button>` : ''}
+        <button class="btn btn-sm btn-danger" onclick="deleteHistory('${h.id}')">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteHistory(id) {
+  State.history = State.history.filter(h => h.id !== id);
+  localStorage.setItem('aiVideoHistory', JSON.stringify(State.history));
+  renderHistory();
+  toast('已删除', 'success');
+}
+
+function clearHistory() {
+  if (!confirm('确定清空所有历史记录？')) return;
+  State.history = [];
+  localStorage.setItem('aiVideoHistory', JSON.stringify(State.history));
+  renderHistory();
+  toast('历史已清空', 'success');
+}
+
+function retryFromHistory(id) {
+  const h = State.history.find(h => h.id === id);
+  if (h) {
+    document.getElementById('videoPrompt').value = h.prompt || '';
+    if (h.imageUrl) {
+      State.startFrameUrl = h.imageUrl;
+      document.getElementById('startFramePreview').innerHTML =
+        `<div class="upload-thumb"><img src="${h.imageUrl}" onerror="this.style.display='none'"><div class="label">首帧图</div><button class="remove" onclick="removeStartFrame()">✕</button></div>`;
+    }
+    switchModule('video');
+    toast('已加载历史任务参数，请重新提交', 'info');
+  }
+}
+</script>
+</body>
+</html>
