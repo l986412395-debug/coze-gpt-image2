@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GPT Image Studio</title>
-<!-- v1 -->
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -87,17 +86,20 @@ html,body{height:100%;font-family:'SF Pro Display',-apple-system,BlinkMacSystemF
 .setting-select{font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;padding-right:24px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238888a0' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
 .setting-select:focus{border-color:var(--accent)}.setting-select option{background:var(--bg-card);color:var(--text-primary)}
 .parallel-info{margin-left:auto;font-size:12px;color:var(--text-secondary)}
+/* Multi-reference images */
+.ref-grid{display:flex;flex-wrap:wrap;gap:6px;padding:8px 0 4px;min-height:0;transition:all .2s}
+.ref-grid.has-images{padding:8px 14px 4px;border-bottom:1px solid var(--border)}
+.ref-thumb-wrap{position:relative;width:52px;height:52px;border-radius:6px;overflow:hidden;border:1px solid var(--border);flex-shrink:0}
+.ref-thumb-wrap img{width:100%;height:100%;object-fit:cover}
+.ref-thumb-remove{position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--error);border:1px solid var(--bg-primary);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;line-height:1;z-index:2}
+.ref-thumb-remove:hover{transform:scale(1.2)}
+.ref-thumb-idx{position:absolute;bottom:1px;left:1px;font-size:9px;padding:1px 4px;border-radius:3px;background:rgba(0,0,0,.65);color:#fff;font-weight:600}
 .input-box{display:flex;align-items:flex-end;gap:10px;position:relative}
 .input-wrapper{flex:1;position:relative;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);transition:all .2s;overflow:hidden}
 .input-wrapper:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
 .input-wrapper.drag-over{border-color:var(--success);box-shadow:0 0 0 3px rgba(0,210,160,.2);background:rgba(0,210,160,.05)}
 .prompt-input{width:100%;padding:12px 14px;border:none;background:transparent;color:var(--text-primary);font-size:14px;line-height:1.5;resize:none;outline:none;min-height:44px;max-height:120px;font-family:inherit}
 .prompt-input::placeholder{color:var(--text-muted)}
-.ref-preview{display:none;padding:8px 14px 0;position:relative}.ref-preview.show{display:flex;align-items:center;gap:8px}
-.ref-thumb{width:48px;height:48px;border-radius:6px;object-fit:cover;border:1px solid var(--border)}
-.ref-label{font-size:12px;color:var(--text-secondary)}
-.ref-remove{width:20px;height:20px;border-radius:50%;background:var(--bg-hover);border:none;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .2s}
-.ref-remove:hover{background:var(--error);color:#fff}
 .drop-zone{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(0,210,160,.08);border:2px dashed var(--success);border-radius:var(--radius);z-index:10;pointer-events:none}
 .drop-zone.show{display:flex}.drop-zone svg{width:32px;height:32px;stroke:var(--success);fill:none;stroke-width:1.5}
 .drop-zone-text{font-size:13px;color:var(--success);font-weight:500}
@@ -168,7 +170,7 @@ html,body{height:100%;font-family:'SF Pro Display',-apple-system,BlinkMacSystemF
     </div>
   </header>
   <main class="main" id="mainArea">
-    <div class="empty-state" id="emptyState"><div class="empty-icon">🎨</div><div class="empty-title">开始创作</div><div class="empty-desc">输入描述文字生成图片<br>拖拽图片到输入框进行图生图</div></div>
+    <div class="empty-state" id="emptyState"><div class="empty-icon">🎨</div><div class="empty-title">开始创作</div><div class="empty-desc">输入描述文字生成图片<br>拖拽图片到输入框进行图生图（最多9张参考图）</div></div>
     <div class="task-grid" id="taskGrid" style="display:none"></div>
   </main>
   <div class="input-area">
@@ -191,11 +193,11 @@ html,body{height:100%;font-family:'SF Pro Display',-apple-system,BlinkMacSystemF
       <div class="parallel-info"><span id="activeCount">0 进行中</span></div>
     </div>
     <div class="input-box">
-      <button class="upload-btn" onclick="fileInput.click()" title="上传参考图"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
-      <input type="file" id="fileInput" accept="image/*" style="display:none">
+      <button class="upload-btn" onclick="fileInput.click()" title="上传参考图（最多9张）"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
+      <input type="file" id="fileInput" accept="image/*" multiple style="display:none">
       <div class="input-wrapper" id="inputWrapper">
         <div class="drop-zone" id="dropZone"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><div class="drop-zone-text">释放图片进行图生图</div></div>
-        <div class="ref-preview" id="refPreview"><img class="ref-thumb" id="refThumb" src="" alt=""><span class="ref-label">参考图</span><button class="ref-remove" onclick="removeRefImage()">✕</button></div>
+        <div class="ref-grid" id="refGrid"></div>
         <textarea class="prompt-input" id="promptInput" placeholder="描述你想生成的图片..." rows="1"></textarea>
       </div>
       <button class="send-btn" onclick="submitTask()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
@@ -243,6 +245,40 @@ let CONFIG = {
   gistId: localStorage.getItem('gis_gist_id') || '',
 };
 
+// ==================== Multi-Reference Images ====================
+const MAX_REFS = 9;
+let refImages = []; // [{file, base64}]
+
+function addRefImage(file) {
+  if (refImages.length >= MAX_REFS) { showToast(`最多添加 ${MAX_REFS} 张参考图`, 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    refImages.push({ file, base64: e.target.result });
+    renderRefGrid();
+    showToast(`已添加参考图 (${refImages.length}/${MAX_REFS})`, 'info');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeRefImage(idx) {
+  refImages.splice(idx, 1);
+  renderRefGrid();
+}
+
+function clearAllRefs() {
+  refImages = [];
+  renderRefGrid();
+}
+
+function renderRefGrid() {
+  const grid = document.getElementById('refGrid');
+  if (!refImages.length) { grid.innerHTML = ''; grid.className = 'ref-grid'; return; }
+  grid.className = 'ref-grid has-images';
+  grid.innerHTML = refImages.map((r, i) =>
+    `<div class="ref-thumb-wrap"><img src="${r.base64}" alt="参考图${i+1}"><button class="ref-thumb-remove" onclick="removeRefImage(${i})">✕</button><span class="ref-thumb-idx">${i+1}</span></div>`
+  ).join('');
+}
+
 // ==================== GitHub Gist Storage ====================
 const GistStore = {
   syncing: false,
@@ -250,7 +286,6 @@ const GistStore = {
   updateUI() {
     const dot = document.getElementById('syncDot');
     const text = document.getElementById('syncText');
-    const syncBtn = document.getElementById('syncBtn');
     if (this.syncing) { dot.className = 'sync-dot syncing'; text.textContent = '同步中'; return; }
     if (CONFIG.gistId) { dot.className = 'sync-dot ok'; text.textContent = '已同步'; }
     else { dot.className = 'sync-dot off'; text.textContent = '本地'; }
@@ -266,34 +301,26 @@ const GistStore = {
   },
 
   async create() {
-    if (!CONFIG.githubToken) throw new Error('请先填写 GitHub Token');
-    this.syncing = true; this.updateUI();
     try {
-      const gist = await this.api('POST', '', {
-        description: 'GPT Image Studio 共享画廊',
-        public: true,
-        files: { 'gallery.json': { content: JSON.stringify({ tasks: [], version: 1 }) } }
-      });
-      CONFIG.gistId = gist.id;
-      localStorage.setItem('gis_gist_id', gist.id);
-      showToast('画廊创建成功！', 'success');
+      this.syncing = true; this.updateUI();
+      const gist = await this.api('POST', '', { public: true, files: { 'gallery.json': { content: '[]' } } });
+      CONFIG.gistId = gist.id; localStorage.setItem('gis_gist_id', gist.id);
+      this.syncing = false; this.updateUI();
+      showToast(`画廊已创建！Gist ID: ${gist.id}`, 'success');
+      document.getElementById('syncAllBtn').style.display = '';
       return gist.id;
-    } catch (e) { showToast('创建失败: ' + e.message, 'error'); return null; }
-    finally { this.syncing = false; this.updateUI(); }
+    } catch (e) { this.syncing = false; this.updateUI(); showToast('创建画廊失败: ' + e.message, 'error'); return null; }
   },
 
   async join(id) {
     try {
-      this.syncing = true; this.updateUI();
-      const gist = await this.api('GET', `/${id}`);
-      CONFIG.gistId = gist.id;
-      localStorage.setItem('gis_gist_id', gist.id);
-      const content = gist.files?.['gallery.json']?.content;
-      const data = content ? JSON.parse(content) : { tasks: [] };
+      CONFIG.gistId = id; localStorage.setItem('gis_gist_id', id);
+      const tasks = await this.load();
+      this.updateUI();
+      document.getElementById('syncAllBtn').style.display = '';
       showToast('已加入画廊！', 'success');
-      return data.tasks || [];
-    } catch (e) { showToast('加入失败: ' + e.message, 'error'); return null; }
-    finally { this.syncing = false; this.updateUI(); }
+      return tasks;
+    } catch (e) { CONFIG.gistId = ''; localStorage.removeItem('gis_gist_id'); this.updateUI(); showToast('加入画廊失败: ' + e.message, 'error'); return null; }
   },
 
   async load() {
@@ -301,7 +328,7 @@ const GistStore = {
     try {
       const gist = await this.api('GET', `/${CONFIG.gistId}`);
       const content = gist.files?.['gallery.json']?.content;
-      return content ? (JSON.parse(content).tasks || []) : [];
+      return content ? JSON.parse(content) : [];
     } catch (e) { console.error('Gist load error:', e); return []; }
   },
 
@@ -309,11 +336,9 @@ const GistStore = {
     if (!CONFIG.gistId || !CONFIG.githubToken) return;
     try {
       this.syncing = true; this.updateUI();
-      await this.api('PATCH', `/${CONFIG.gistId}`, {
-        files: { 'gallery.json': { content: JSON.stringify({ tasks, version: 1 }) } }
-      });
-    } catch (e) { console.error('Gist save error:', e); showToast('同步失败: ' + e.message, 'error'); }
-    finally { this.syncing = false; this.updateUI(); }
+      await this.api('PATCH', `/${CONFIG.gistId}`, { files: { 'gallery.json': { content: JSON.stringify(tasks) } } });
+      this.syncing = false; this.updateUI();
+    } catch (e) { this.syncing = false; this.updateUI(); throw e; }
   },
 
   async addTask(task) {
@@ -321,7 +346,7 @@ const GistStore = {
     try {
       const tasks = await this.load();
       const thumb = task.imageData ? await compressImage(task.imageData, 480, 0.6) : null;
-      tasks.unshift({ id: task.id, prompt: task.prompt, size: task.size, quality: task.quality, hasRef: task.hasRef, status: task.status, createdAt: task.createdAt.getTime(), thumbnail: thumb });
+      tasks.unshift({ id: task.id, prompt: task.prompt, size: task.size, quality: task.quality, hasRef: task.hasRef, refCount: task.refCount || (task.hasRef ? 1 : 0), status: task.status, createdAt: task.createdAt.getTime(), thumbnail: thumb });
       if (tasks.length > 80) tasks.length = 80;
       await this.save(tasks);
     } catch (e) { console.error('Gist add error:', e); }
@@ -371,20 +396,31 @@ async function loadTaskImage(id) { try { const r = await dbGet(id); return r ? r
 async function deleteTaskImage(id) { try { await dbDelete(id); } catch(e) {} }
 
 // ==================== State ====================
-let tasks = [], taskIdCounter = 0, refImageFile = null, refImageBase64 = null, currentLightboxTaskId = null;
+let tasks = [], taskIdCounter = 0, currentLightboxTaskId = null;
 
 function saveTasksMeta() {
-  localStorage.setItem('gis_tasks', JSON.stringify(tasks.map(t => ({ id: t.id, prompt: t.prompt, size: t.size, quality: t.quality, hasRef: t.hasRef, refBase64: t.refBase64 || null, status: t.status === 'generating' ? 'pending' : t.status, error: t.error || null, createdAt: t.createdAt.getTime() }))));
+  localStorage.setItem('gis_tasks', JSON.stringify(tasks.map(t => ({ id: t.id, prompt: t.prompt, size: t.size, quality: t.quality, hasRef: t.hasRef, refCount: t.refCount || (t.hasRef ? 1 : 0), refBase64List: t.refBase64List || [], status: t.status === 'generating' ? 'pending' : t.status, error: t.error || null, createdAt: t.createdAt.getTime() }))));
   localStorage.setItem('gis_counter', String(taskIdCounter));
 }
+
 function loadTasksMeta() {
-  try { const r = localStorage.getItem('gis_tasks'), c = localStorage.getItem('gis_counter'); if (c) taskIdCounter = parseInt(c) || 0; if (!r) return []; return JSON.parse(r).map(m => ({ id: m.id, prompt: m.prompt, size: m.size, quality: m.quality, hasRef: m.hasRef, refFile: m.refBase64 ? dataURLtoFile(m.refBase64, 'ref.png') : null, refBase64: m.refBase64 || null, status: m.status, imageData: null, error: m.error || null, createdAt: new Date(m.createdAt), startTime: null, _imageLoaded: false, isLocal: true })); } catch(e) { return []; }
+  try {
+    const r = localStorage.getItem('gis_tasks'), c = localStorage.getItem('gis_counter');
+    if (c) taskIdCounter = parseInt(c) || 0;
+    if (!r) return [];
+    return JSON.parse(r).map(m => ({
+      id: m.id, prompt: m.prompt, size: m.size, quality: m.quality,
+      hasRef: m.hasRef, refCount: m.refCount || (m.hasRef ? 1 : 0),
+      refBase64List: m.refBase64List || [],
+      status: m.status, imageData: null, error: m.error || null,
+      createdAt: new Date(m.createdAt), startTime: null, _imageLoaded: false, isLocal: true
+    }));
+  } catch(e) { return []; }
 }
 
 // ==================== DOM ====================
 const promptInput = document.getElementById('promptInput'), inputWrapper = document.getElementById('inputWrapper');
-const dropZone = document.getElementById('dropZone'), refPreview = document.getElementById('refPreview');
-const refThumb = document.getElementById('refThumb'), fileInput = document.getElementById('fileInput');
+const dropZone = document.getElementById('dropZone'), fileInput = document.getElementById('fileInput');
 const taskGrid = document.getElementById('taskGrid'), emptyState = document.getElementById('emptyState');
 const sizeSelect = document.getElementById('sizeSelect'), qualitySelect = document.getElementById('qualitySelect');
 const parallelSelect = document.getElementById('parallelSelect');
@@ -401,18 +437,19 @@ let dragCounter = 0;
 inputWrapper.addEventListener('dragenter', function(e) { e.preventDefault(); dragCounter++; if (e.dataTransfer.types?.includes('Files')) { dropZone.classList.add('show'); inputWrapper.classList.add('drag-over'); } });
 inputWrapper.addEventListener('dragleave', function(e) { e.preventDefault(); dragCounter--; if (!dragCounter) { dropZone.classList.remove('show'); inputWrapper.classList.remove('drag-over'); } });
 inputWrapper.addEventListener('dragover', function(e) { e.preventDefault(); });
-inputWrapper.addEventListener('drop', function(e) { e.preventDefault(); dragCounter = 0; dropZone.classList.remove('show'); inputWrapper.classList.remove('drag-over'); const f = e.dataTransfer.files; if (f.length && f[0].type.startsWith('image/')) setRefImage(f[0]); });
-fileInput.addEventListener('change', function() { if (this.files.length) setRefImage(this.files[0]); });
-function setRefImage(file) { refImageFile = file; const r = new FileReader(); r.onload = (e) => { refImageBase64 = e.target.result; refThumb.src = e.target.result; refPreview.classList.add('show'); }; r.readAsDataURL(file); showToast('已添加参考图', 'info'); }
-function removeRefImage() { refImageFile = null; refImageBase64 = null; refPreview.classList.remove('show'); fileInput.value = ''; }
+inputWrapper.addEventListener('drop', function(e) { e.preventDefault(); dragCounter = 0; dropZone.classList.remove('show'); inputWrapper.classList.remove('drag-over'); const f = e.dataTransfer.files; for (let i = 0; i < f.length; i++) { if (f[i].type.startsWith('image/')) addRefImage(f[i]); } });
+fileInput.addEventListener('change', function() { for (let i = 0; i < this.files.length; i++) { if (this.files[i].type.startsWith('image/')) addRefImage(this.files[i]); } this.value = ''; });
+
 function dataURLtoFile(u, n) { const a = u.split(','), m = a[0].match(/:(.*?);/)[1], b = atob(a[1]); let l = b.length; const u8 = new Uint8Array(l); while(l--) u8[l] = b.charCodeAt(l); return new File([u8], n, {type:m}); }
 
 // ==================== Task ====================
-async function createTask(prompt, size, quality, hasRef) {
+async function createTask(prompt, size, quality, hasRef, refCount) {
   const id = ++taskIdCounter;
-  const task = { id, prompt, size, quality, hasRef, refFile: refImageFile, refBase64: refImageBase64, status: 'pending', imageData: null, error: null, createdAt: new Date(), startTime: null, _imageLoaded: false, isLocal: true };
+  const refBase64List = refImages.map(r => r.base64);
+  const task = { id, prompt, size, quality, hasRef, refCount, refBase64List, status: 'pending', imageData: null, error: null, createdAt: new Date(), startTime: null, _imageLoaded: false, isLocal: true };
   tasks.unshift(task); saveTasksMeta(); updateUI(); processQueue();
 }
+
 function updateTask(id, u) { const t = tasks.find(x => x.id === id); if (t) { Object.assign(t, u); saveTasksMeta(); updateUI(); } }
 
 async function processQueue() {
@@ -426,7 +463,7 @@ async function processQueue() {
 async function executeTask(task) {
   updateTask(task.id, { status: 'generating', startTime: Date.now() });
   try {
-    const r = task.hasRef && task.refFile ? await callEditAPI(task) : await callGenerateAPI(task);
+    const r = task.hasRef ? await callEditAPI(task) : await callGenerateAPI(task);
     if (r?.imageData) { await saveTaskImage(task.id, r.imageData); updateTask(task.id, { status: 'success', imageData: r.imageData, _imageLoaded: true }); showToast('生成成功！', 'success'); GistStore.addTask(task); }
     else throw new Error('API 返回数据为空');
   } catch (e) { updateTask(task.id, { status: 'failed', error: e.message || '生成失败' }); showToast(`生成失败: ${e.message}`, 'error'); }
@@ -438,17 +475,53 @@ async function callGenerateAPI(t) {
   if (!r.ok) { const x = await r.text(); let m = `HTTP ${r.status}`; try { m = JSON.parse(x).error?.message || m; } catch {} throw new Error(m); }
   const d = await r.json(); if (d.data?.[0]?.b64_json) return { imageData: `data:image/png;base64,${d.data[0].b64_json}` }; throw new Error('无图片数据');
 }
+
 async function callEditAPI(t) {
-  const fd = new FormData(); fd.append('model', 'gpt-image-2'); fd.append('prompt', t.prompt); fd.append('image', t.refFile); fd.append('size', t.size);
+  const fd = new FormData();
+  fd.append('model', 'gpt-image-2');
+  fd.append('prompt', t.prompt);
+  fd.append('size', t.size);
+  // Add all reference images
+  const refList = t.refBase64List || [];
+  if (refList.length > 0) {
+    for (let i = 0; i < refList.length; i++) {
+      const file = dataURLtoFile(refList[i], `ref_${i}.png`);
+      fd.append('image', file);
+    }
+  }
   const r = await fetch(`${CONFIG.apiBase}/images/edits`, { method: 'POST', headers: { 'Authorization': `Bearer ${CONFIG.apiKey}` }, body: fd });
   if (!r.ok) { const x = await r.text(); let m = `HTTP ${r.status}`; try { m = JSON.parse(x).error?.message || m; } catch {} throw new Error(m); }
-  const d = await r.json(); if (d.data?.[0]?.b64_json) return { imageData: `data:image/png;base64,${d.data[0].b64_json}` }; if (d.data?.[0]?.url) return { imageData: d.data[0].url }; throw new Error('无图片数据');
+  const d = await r.json();
+  if (d.data?.[0]?.b64_json) return { imageData: `data:image/png;base64,${d.data[0].b64_json}` };
+  if (d.data?.[0]?.url) return { imageData: d.data[0].url };
+  throw new Error('无图片数据');
 }
 
-async function regenerateTask(id) { const t = tasks.find(x => x.id === id); if (!t) return; updateTask(id, { status: 'pending', imageData: null, error: null, refFile: t.refBase64 ? dataURLtoFile(t.refBase64, 'ref.png') : t.refFile, isLocal: true }); processQueue(); }
-async function deleteTask(id) { const i = tasks.findIndex(x => x.id === id); if (i < 0) return; const t = tasks[i]; tasks.splice(i, 1); saveTasksMeta(); if (t.isLocal) await deleteTaskImage(id); await GistStore.removeTask(id); updateUI(); showToast('已删除', 'info'); }
+async function regenerateTask(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  updateTask(id, { status: 'pending', imageData: null, error: null, isLocal: true });
+  processQueue();
+}
 
-function submitTask() { const p = promptInput.value.trim(); if (!p) { showToast('请输入描述', 'error'); promptInput.focus(); return; } createTask(p, sizeSelect.value, qualitySelect.value, !!refImageFile); promptInput.value = ''; promptInput.style.height = 'auto'; }
+async function deleteTask(id) {
+  const i = tasks.findIndex(x => x.id === id);
+  if (i < 0) return;
+  const t = tasks[i]; tasks.splice(i, 1); saveTasksMeta();
+  if (t.isLocal) await deleteTaskImage(id);
+  await GistStore.removeTask(id);
+  updateUI(); showToast('已删除', 'info');
+}
+
+function submitTask() {
+  const p = promptInput.value.trim();
+  if (!p) { showToast('请输入描述', 'error'); promptInput.focus(); return; }
+  const hasRef = refImages.length > 0;
+  const refCount = refImages.length;
+  createTask(p, sizeSelect.value, qualitySelect.value, hasRef, refCount);
+  promptInput.value = ''; promptInput.style.height = 'auto';
+  clearAllRefs();
+}
 
 // ==================== UI ====================
 const SIZE_LABELS = { '1024x1024':'1:1', '1024x1536':'2:3', '1536x1024':'3:2', '1792x1024':'16:9', '1024x1792':'9:16' };
@@ -473,14 +546,15 @@ function buildImgArea(t) {
   h += `<button class="task-delete" onclick="event.stopPropagation();deleteTask(${t.id})">✕</button>`;
   if (t.status === 'generating') { const e = t.startTime ? Math.floor((Date.now() - t.startTime) / 1000) : 0; h += `<div class="task-loading"><div class="spinner"></div><div class="loading-text">生成中... ${e}s</div></div><div class="progress-bar" style="width:${Math.min(e*2,90)}%"></div>`; }
   else if (t.status === 'failed') h += `<div class="task-failed-overlay"><div class="error-icon">⚠</div><div class="error-msg">${esc(t.error||'生成失败')}</div><button class="btn-regen" onclick="event.stopPropagation();regenerateTask(${t.id})"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>重新生成</button></div>`;
-  else if (t.status === 'success' && t._imageLoaded && t.imageData) h += `<img src="${t.imageData}" loading="lazy"><div class="image-actions"><button class="img-action-btn" onclick="event.stopPropagation();downloadTaskImage(${t.id})" title="下载"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button><button class="img-action-btn" onclick="event.stopPropagation();copyPrompt(${t.id})" title="复制"><svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2M9 2h6a1 1 0 011 1v2a1 1 0 01-1 1H9a1 1 0 01-1-1V3a1 1 0 011-1z"/></svg></button><button class="img-action-btn" onclick="event.stopPropagation();useTaskAsRef(${t.id})" title="参考"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button></div>`;
+  else if (t.status === 'success' && t._imageLoaded && t.imageData) h += `<img src="${t.imageData}" loading="lazy"><div class="image-actions"><button class="img-action-btn" onclick="event.stopPropagation();downloadTaskImage(${t.id})" title="下载"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button><button class="img-action-btn" onclick="event.stopPropagation();copyPrompt(${t.id})" title="复制提示词"><svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2M9 2h6a1 1 0 011 1v2a1 1 0 01-1 1H9a1 1 0 01-1-1V3a1 1 0 011-1z"/></svg></button><button class="img-action-btn" onclick="event.stopPropagation();useTaskAsRef(${t.id})" title="用作参考图"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button></div>`;
   else h += `<div class="task-loading"><div class="spinner" style="border-top-color:var(--success)"></div><div class="loading-text">加载中...</div></div>`;
   return h;
 }
 
 function renderTaskCard(t) {
   const time = t.createdAt.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  return `<div class="task-card ${t.status}" data-id="${t.id}"><div class="task-image-wrap">${buildImgArea(t)}</div><div class="task-info"><div class="task-prompt">${esc(t.prompt)}</div><div class="task-meta"><span class="meta-tag size">${SIZE_LABELS[t.size]||t.size}</span><span class="meta-tag quality">${t.quality}</span>${t.hasRef?'<span class="meta-tag img2img">图生图</span>':''}${!t.isLocal?'<span class="meta-tag" style="background:rgba(0,210,160,.1);color:var(--success)">共享</span>':''}<span class="meta-time">${time}</span></div></div></div>`;
+  const refLabel = t.refCount > 1 ? `图生图×${t.refCount}` : '图生图';
+  return `<div class="task-card ${t.status}" data-id="${t.id}"><div class="task-image-wrap">${buildImgArea(t)}</div><div class="task-info"><div class="task-prompt">${esc(t.prompt)}</div><div class="task-meta"><span class="meta-tag size">${SIZE_LABELS[t.size]||t.size}</span><span class="meta-tag quality">${t.quality}</span>${t.hasRef?`<span class="meta-tag img2img">${refLabel}</span>`:''}${!t.isLocal?'<span class="meta-tag" style="background:rgba(0,210,160,.1);color:var(--success)">共享</span>':''}<span class="meta-time">${time}</span></div></div></div>`;
 }
 function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
@@ -490,8 +564,8 @@ function closeLightbox(e) { if (e && e.target !== lightbox && !e.target.classLis
 function downloadImage() { if (currentLightboxTaskId) downloadTaskImage(currentLightboxTaskId); }
 function useAsReference() { if (currentLightboxTaskId) { useTaskAsRef(currentLightboxTaskId); closeLightbox(); } }
 async function downloadTaskImage(id) { const t = tasks.find(x => x.id === id); if (!t) return; if (!t.imageData && t.isLocal) { t.imageData = await loadTaskImage(t.id); t._imageLoaded = !!t.imageData; } if (!t.imageData) return; const a = document.createElement('a'); a.href = t.imageData; a.download = `gpt-image-${t.id}.png`; document.body.appendChild(a); a.click(); a.remove(); showToast('已下载', 'success'); }
-function copyPrompt(id) { const t = tasks.find(x => x.id === id); if (!t) return; navigator.clipboard.writeText(t.prompt).then(() => showToast('已复制', 'success')).catch(() => showToast('复制失败', 'error')); }
-async function useTaskAsRef(id) { const t = tasks.find(x => x.id === id); if (!t) return; if (!t.imageData && t.isLocal) { t.imageData = await loadTaskImage(t.id); t._imageLoaded = !!t.imageData; } if (!t.imageData) return; refImageFile = dataURLtoFile(t.imageData, `t-${t.id}.png`); refImageBase64 = t.imageData; refThumb.src = t.imageData; refPreview.classList.add('show'); showToast('已设为参考图', 'info'); promptInput.focus(); }
+function copyPrompt(id) { const t = tasks.find(x => x.id === id); if (!t) return; navigator.clipboard.writeText(t.prompt).then(() => showToast('已复制提示词', 'success')).catch(() => showToast('复制失败', 'error')); }
+async function useTaskAsRef(id) { const t = tasks.find(x => x.id === id); if (!t) return; if (!t.imageData && t.isLocal) { t.imageData = await loadTaskImage(t.id); t._imageLoaded = !!t.imageData; } if (!t.imageData) return; const file = dataURLtoFile(t.imageData, `t-${t.id}.png`); addRefImage(file); promptInput.focus(); }
 
 // ==================== Export / Import ====================
 async function exportGallery() {
@@ -501,9 +575,9 @@ async function exportGallery() {
     if (!t.imageData && t.isLocal) { t.imageData = await loadTaskImage(t.id); t._imageLoaded = !!t.imageData; }
     if (!t.imageData) continue;
     const thumb = await compressImage(t.imageData, 640, 0.7);
-    exportData.push({ id: t.id, prompt: t.prompt, size: t.size, quality: t.quality, hasRef: t.hasRef, createdAt: t.createdAt.getTime(), thumbnail: thumb });
+    exportData.push({ id: t.id, prompt: t.prompt, size: t.size, quality: t.quality, hasRef: t.hasRef, refCount: t.refCount || (t.hasRef ? 1 : 0), createdAt: t.createdAt.getTime(), thumbnail: thumb });
   }
-  const json = JSON.stringify({ version: 1, tasks: exportData, exportedAt: Date.now() });
+  const json = JSON.stringify({ version: 2, tasks: exportData, exportedAt: Date.now() });
   const blob = new Blob([json], { type: 'application/json' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = `gpt-image-gallery-${new Date().toISOString().slice(0,10)}.json`;
@@ -520,9 +594,10 @@ importFileInput.addEventListener('change', async function() {
     if (!data.tasks?.length) { showToast('文件中没有记录', 'error'); return; }
     const newTasks = data.tasks.map(t => ({
       id: ++taskIdCounter, prompt: t.prompt, size: t.size, quality: t.quality,
-      hasRef: t.hasRef || false, refFile: null, refBase64: null, status: 'success',
-      imageData: t.thumbnail || null, error: null, createdAt: new Date(t.createdAt),
-      startTime: null, _imageLoaded: !!t.thumbnail, thumbnail: t.thumbnail, isLocal: false
+      hasRef: t.hasRef || false, refCount: t.refCount || (t.hasRef ? 1 : 0), refBase64List: [],
+      status: 'success', imageData: t.thumbnail || null, error: null,
+      createdAt: new Date(t.createdAt), startTime: null, _imageLoaded: !!t.thumbnail,
+      thumbnail: t.thumbnail, isLocal: false
     }));
     tasks = [...newTasks, ...tasks]; saveTasksMeta(); updateUI();
     showToast(`已导入 ${newTasks.length} 条记录`, 'success');
@@ -540,23 +615,27 @@ function openSettings() {
   settingsModal.classList.add('show');
 }
 function closeSettings() { settingsModal.classList.remove('show'); }
+
+function saveApiSettings() {
+  const base = document.getElementById('apiBaseInput').value.trim();
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (base) { CONFIG.apiBase = base; localStorage.setItem('gis_apiBase', base); }
+  if (key) { CONFIG.apiKey = key; localStorage.setItem('gis_apiKey', key); }
+}
+
 async function createGallery() {
+  saveApiSettings();
   const token = document.getElementById('githubTokenInput').value.trim();
   if (token) { CONFIG.githubToken = token; localStorage.setItem('gis_github_token', token); }
   const id = await GistStore.create();
   if (id) {
     document.getElementById('gistIdInput').value = id;
-    // Auto sync all existing local success tasks
     await syncAllToGist();
   }
 }
 
 async function handleSyncClick() {
-  if (!CONFIG.gistId || !CONFIG.githubToken) {
-    showToast('请先在设置中创建或加入画廊', 'info');
-    openSettings();
-    return;
-  }
+  if (!CONFIG.gistId || !CONFIG.githubToken) { showToast('请先在设置中创建或加入画廊', 'info'); openSettings(); return; }
   await syncAllToGist();
 }
 
@@ -565,7 +644,6 @@ async function syncAllToGist() {
   const localSuccess = tasks.filter(t => t.isLocal && t.status === 'success');
   if (!localSuccess.length) { showToast('没有本地记录可同步', 'info'); return; }
   showToast(`正在同步 ${localSuccess.length} 条记录...`, 'info');
-  // Load existing Gist data first
   let gistTasks = await GistStore.load();
   const gistIds = new Set(gistTasks.map(t => t.id));
   let added = 0;
@@ -573,18 +651,16 @@ async function syncAllToGist() {
     if (gistIds.has(task.id)) continue;
     if (!task.imageData) { task.imageData = await loadTaskImage(task.id); task._imageLoaded = !!task.imageData; }
     const thumb = task.imageData ? await compressImage(task.imageData, 480, 0.6) : null;
-    gistTasks.unshift({ id: task.id, prompt: task.prompt, size: task.size, quality: task.quality, hasRef: task.hasRef, status: task.status, createdAt: task.createdAt.getTime(), thumbnail: thumb });
+    gistTasks.unshift({ id: task.id, prompt: task.prompt, size: task.size, quality: task.quality, hasRef: task.hasRef, refCount: task.refCount || (task.hasRef ? 1 : 0), status: task.status, createdAt: task.createdAt.getTime(), thumbnail: thumb });
     added++;
   }
   if (gistTasks.length > 80) gistTasks.length = 80;
-  if (added > 0) {
-    await GistStore.save(gistTasks);
-    showToast(`已同步 ${added} 条记录到画廊！`, 'success');
-  } else {
-    showToast('所有记录已是最新', 'info');
-  }
+  if (added > 0) { await GistStore.save(gistTasks); showToast(`已同步 ${added} 条记录到画廊！`, 'success'); }
+  else { showToast('所有记录已是最新', 'info'); }
 }
+
 async function joinGallery() {
+  saveApiSettings();
   const token = document.getElementById('githubTokenInput').value.trim();
   const id = document.getElementById('gistIdInput').value.trim();
   if (token) { CONFIG.githubToken = token; localStorage.setItem('gis_github_token', token); }
@@ -592,13 +668,11 @@ async function joinGallery() {
   const shared = await GistStore.join(id);
   if (shared) {
     closeSettings();
-    if (shared.length === 0) {
-      showToast('画廊已连接，但暂无记录。让对方点击「🔄 同步全部」上传记录', 'info');
-    } else {
-      await mergeShared(shared);
-    }
+    if (shared.length === 0) { showToast('画廊已连接，但暂无记录。让对方点击「🔄 同步」上传记录', 'info'); }
+    else { await mergeShared(shared); }
   }
 }
+
 function disconnectGallery() { GistStore.disconnect(); closeSettings(); showToast('已断开云同步', 'info'); }
 
 async function syncSharedTasks() {
@@ -611,9 +685,10 @@ async function mergeShared(shared) {
   const localIds = new Set(tasks.filter(t => t.isLocal).map(t => t.id));
   const newShared = shared.filter(st => !localIds.has(st.id)).map(st => ({
     id: st.id, prompt: st.prompt, size: st.size, quality: st.quality,
-    hasRef: st.hasRef || false, refFile: null, refBase64: null, status: st.status || 'success',
-    imageData: st.thumbnail || null, error: null, createdAt: new Date(st.createdAt),
-    startTime: null, _imageLoaded: !!st.thumbnail, thumbnail: st.thumbnail, isLocal: false
+    hasRef: st.hasRef || false, refCount: st.refCount || (st.hasRef ? 1 : 0), refBase64List: [],
+    status: st.status || 'success', imageData: st.thumbnail || null, error: null,
+    createdAt: new Date(st.createdAt), startTime: null, _imageLoaded: !!st.thumbnail,
+    thumbnail: st.thumbnail, isLocal: false
   }));
   tasks = [...tasks, ...newShared].sort((a, b) => b.createdAt - a.createdAt);
   updateUI();
@@ -643,9 +718,7 @@ document.getElementById('confirmOverlay').addEventListener('click', function(e) 
 async function init() {
   await openDB(); GistStore.updateUI();
   tasks = loadTasksMeta(); updateUI();
-  // Auto sync if gist is configured
   if (CONFIG.gistId) await syncSharedTasks();
-  // Resume pending
   if (tasks.some(t => t.status === 'pending' && t.isLocal)) processQueue();
 }
 init();
