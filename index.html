@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPT Image Studio</title>
+<!-- v1 -->
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-primary:#0a0a0f;--bg-secondary:#12121a;--bg-card:#1a1a26;--bg-input:#16161f;
+  --bg-hover:#222233;--border:#2a2a3a;--border-focus:#6c5ce7;
+  --text-primary:#e8e8f0;--text-secondary:#8888a0;--text-muted:#55556a;
+  --accent:#6c5ce7;--accent-light:#8b7cf7;--accent-glow:rgba(108,92,231,.25);
+  --success:#00d2a0;--error:#ff6b6b;--warning:#ffc048;
+  --radius:12px;--radius-sm:8px;--shadow:0 4px 24px rgba(0,0,0,.4);
+}
+html,body{height:100%;font-family:'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg-primary);color:var(--text-primary);overflow:hidden}
+::selection{background:var(--accent);color:#fff}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.app{display:flex;flex-direction:column;height:100vh;position:relative}
+.header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:rgba(10,10,15,.8);backdrop-filter:blur(20px);z-index:100;flex-shrink:0}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#a855f7);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;box-shadow:0 0 20px var(--accent-glow)}
+.header-title{font-size:18px;font-weight:600;letter-spacing:-.3px}
+.header-title span{color:var(--text-secondary);font-weight:400;font-size:13px;margin-left:8px}
+.header-right{display:flex;align-items:center;gap:10px}
+.header-badge{font-size:11px;padding:4px 10px;border-radius:20px;background:rgba(108,92,231,.15);color:var(--accent-light);font-weight:500}
+.btn-sm{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:500;border:1px solid;cursor:pointer;transition:all .2s;white-space:nowrap;background:transparent}
+.btn-sm.share{color:var(--success);border-color:rgba(0,210,160,.2)}
+.btn-sm.share:hover{background:rgba(0,210,160,.1);border-color:rgba(0,210,160,.4)}
+.btn-sm.export{color:var(--accent-light);border-color:rgba(108,92,231,.2)}
+.btn-sm.export:hover{background:rgba(108,92,231,.1);border-color:rgba(108,92,231,.4)}
+.btn-sm.clear{color:var(--error);border-color:rgba(255,107,107,.2);display:none}
+.btn-sm.clear:hover{background:rgba(255,107,107,.1);border-color:rgba(255,107,107,.4)}
+.btn-icon{width:36px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-card);color:var(--text-secondary);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s}
+.btn-icon:hover{background:var(--bg-hover);color:var(--text-primary);border-color:var(--text-muted)}
+.sync-status{font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:4px}
+.sync-dot{width:6px;height:6px;border-radius:50%}
+.sync-dot.ok{background:var(--success)}.sync-dot.off{background:var(--text-muted)}
+.sync-dot.syncing{background:var(--warning);animation:pulse-dot 1s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+.main{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:20px}
+.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;opacity:.6}
+.empty-icon{width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,rgba(108,92,231,.2),rgba(168,85,247,.2));display:flex;align-items:center;justify-content:center;font-size:36px}
+.empty-title{font-size:20px;font-weight:600}.empty-desc{font-size:14px;color:var(--text-secondary);text-align:center;line-height:1.6}
+.task-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.task-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all .3s;position:relative}
+.task-card:hover{border-color:var(--text-muted);transform:translateY(-2px);box-shadow:var(--shadow)}
+.task-card.generating{border-color:var(--accent);box-shadow:0 0 30px var(--accent-glow)}
+.task-card.failed{border-color:var(--error)}
+.task-image-wrap{position:relative;aspect-ratio:1;overflow:hidden;background:var(--bg-secondary);cursor:pointer}
+.task-image-wrap img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
+.task-card:hover .task-image-wrap img{transform:scale(1.03)}
+.task-delete{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.15);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;opacity:0;transition:all .2s;z-index:5}
+.task-card:hover .task-delete{opacity:1}.task-delete:hover{background:var(--error);border-color:var(--error)}
+.shared-badge{position:absolute;top:8px;left:8px;font-size:10px;padding:3px 7px;border-radius:4px;background:rgba(0,210,160,.2);color:var(--success);font-weight:600;z-index:5;backdrop-filter:blur(8px);border:1px solid rgba(0,210,160,.3)}
+.task-loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg-secondary)}
+.spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:13px;color:var(--text-secondary)}
+.progress-bar{position:absolute;bottom:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),#a855f7);transition:width .3s;border-radius:0 3px 0 0}
+.task-failed-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(10,10,15,.85);backdrop-filter:blur(4px)}
+.task-failed-overlay .error-icon{width:48px;height:48px;border-radius:50%;background:rgba(255,107,107,.15);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--error)}
+.task-failed-overlay .error-msg{font-size:13px;color:var(--error);text-align:center;max-width:200px;line-height:1.4}
+.btn-regen{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);background:var(--error);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:500;transition:all .2s}
+.btn-regen:hover{background:#ff5252;transform:scale(1.05)}
+.btn-regen svg{width:16px;height:16px;fill:currentColor}
+.image-actions{position:absolute;inset:0;background:rgba(0,0,0,.5);opacity:0;display:flex;align-items:center;justify-content:center;gap:10px;transition:opacity .2s}
+.task-card:hover .image-actions{opacity:1}
+.img-action-btn{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.15);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s}
+.img-action-btn:hover{background:rgba(255,255,255,.3);transform:scale(1.1)}
+.img-action-btn svg{width:18px;height:18px;fill:currentColor}
+.task-info{padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.task-prompt{font-size:13px;line-height:1.5;color:var(--text-primary);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.task-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.meta-tag{font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(108,92,231,.1);color:var(--accent-light);font-weight:500}
+.meta-tag.size{background:rgba(0,210,160,.1);color:var(--success)}
+.meta-tag.quality{background:rgba(255,192,72,.1);color:var(--warning)}
+.meta-tag.img2img{background:rgba(255,107,107,.1);color:var(--error)}
+.meta-time{font-size:11px;color:var(--text-muted);margin-left:auto}
+.input-area{border-top:1px solid var(--border);background:rgba(18,18,26,.9);backdrop-filter:blur(20px);padding:16px 24px 20px;flex-shrink:0}
+.settings-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.setting-group{display:flex;align-items:center;gap:6px}
+.setting-label{font-size:12px;color:var(--text-muted);font-weight:500}
+.setting-select{font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;padding-right:24px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238888a0' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+.setting-select:focus{border-color:var(--accent)}.setting-select option{background:var(--bg-card);color:var(--text-primary)}
+.parallel-info{margin-left:auto;font-size:12px;color:var(--text-secondary)}
+.input-box{display:flex;align-items:flex-end;gap:10px;position:relative}
+.input-wrapper{flex:1;position:relative;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);transition:all .2s;overflow:hidden}
+.input-wrapper:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.input-wrapper.drag-over{border-color:var(--success);box-shadow:0 0 0 3px rgba(0,210,160,.2);background:rgba(0,210,160,.05)}
+.prompt-input{width:100%;padding:12px 14px;border:none;background:transparent;color:var(--text-primary);font-size:14px;line-height:1.5;resize:none;outline:none;min-height:44px;max-height:120px;font-family:inherit}
+.prompt-input::placeholder{color:var(--text-muted)}
+.ref-preview{display:none;padding:8px 14px 0;position:relative}.ref-preview.show{display:flex;align-items:center;gap:8px}
+.ref-thumb{width:48px;height:48px;border-radius:6px;object-fit:cover;border:1px solid var(--border)}
+.ref-label{font-size:12px;color:var(--text-secondary)}
+.ref-remove{width:20px;height:20px;border-radius:50%;background:var(--bg-hover);border:none;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .2s}
+.ref-remove:hover{background:var(--error);color:#fff}
+.drop-zone{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(0,210,160,.08);border:2px dashed var(--success);border-radius:var(--radius);z-index:10;pointer-events:none}
+.drop-zone.show{display:flex}.drop-zone svg{width:32px;height:32px;stroke:var(--success);fill:none;stroke-width:1.5}
+.drop-zone-text{font-size:13px;color:var(--success);font-weight:500}
+.send-btn{width:44px;height:44px;border-radius:var(--radius);background:linear-gradient(135deg,var(--accent),#a855f7);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.send-btn:hover{transform:scale(1.05);box-shadow:0 0 20px var(--accent-glow)}
+.send-btn:active{transform:scale(.95)}.send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.send-btn svg{width:20px;height:20px;fill:currentColor}
+.upload-btn{width:44px;height:44px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-card);color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.upload-btn:hover{background:var(--bg-hover);color:var(--text-primary);border-color:var(--text-muted)}
+.upload-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+.lightbox{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;backdrop-filter:blur(10px)}
+.lightbox.show{display:flex}
+.lightbox img{max-width:90vw;max-height:85vh;border-radius:var(--radius);box-shadow:0 0 60px rgba(0,0,0,.5)}
+.lightbox-close{position:absolute;top:20px;right:20px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;transition:all .2s}
+.lightbox-close:hover{background:rgba(255,255,255,.2)}
+.lightbox-actions{position:absolute;bottom:24px;display:flex;gap:12px}
+.lightbox-action{padding:10px 20px;border-radius:var(--radius-sm);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;cursor:pointer;font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;transition:all .2s}
+.lightbox-action:hover{background:rgba(255,255,255,.2)}
+.toast-container{position:fixed;top:20px;right:20px;z-index:2000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;animation:toast-in .3s ease;box-shadow:var(--shadow);max-width:360px}
+.toast.success{background:rgba(0,210,160,.15);color:var(--success);border:1px solid rgba(0,210,160,.3)}
+.toast.error{background:rgba(255,107,107,.15);color:var(--error);border:1px solid rgba(255,107,107,.3)}
+.toast.info{background:rgba(108,92,231,.15);color:var(--accent-light);border:1px solid rgba(108,92,231,.3)}
+@keyframes toast-in{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.modal-overlay{position:fixed;inset:0;z-index:1500;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px;width:520px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.5);max-height:90vh;overflow-y:auto}
+.modal h3{font-size:18px;font-weight:600;margin-bottom:20px}
+.modal-field{margin-bottom:16px}
+.modal-field label{display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:500}
+.modal-field input{width:100%;padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:14px;outline:none;transition:all .2s}
+.modal-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.modal-field .hint{font-size:11px;color:var(--text-muted);margin-top:4px;line-height:1.5}
+.modal-field .hint a{color:var(--accent-light);text-decoration:none}
+.modal-field .hint a:hover{text-decoration:underline}
+.modal-sep{border:0;border-top:1px solid var(--border);margin:20px 0}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap}
+.modal-btn{padding:8px 20px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;border:1px solid var(--border)}
+.modal-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}.modal-btn.primary:hover{background:var(--accent-light)}
+.modal-btn.secondary{background:transparent;color:var(--text-secondary)}.modal-btn.secondary:hover{background:var(--bg-hover);color:var(--text-primary)}
+.modal-btn.danger{background:var(--error);color:#fff;border-color:var(--error)}.modal-btn.danger:hover{background:#ff5252}
+.modal-btn.success{background:var(--success);color:#fff;border-color:var(--success)}.modal-btn.success:hover{background:#00b88a}
+.confirm-overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.confirm-overlay.show{display:flex}
+.confirm-box{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px;width:380px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.5);text-align:center}
+.confirm-box p{font-size:14px;margin-bottom:20px;line-height:1.6;color:var(--text-primary)}
+.confirm-actions{display:flex;gap:10px;justify-content:center}
+@media(max-width:768px){.header{padding:12px 16px}.main{padding:16px}.task-grid{grid-template-columns:1fr}.input-area{padding:12px 16px 16px}.settings-row{gap:8px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">G</div>
+      <div class="header-title">GPT Image Studio <span>Powered by gpt-image-2</span></div>
+    </div>
+    <div class="header-right">
+      <div class="sync-status" id="syncStatus"><span class="sync-dot off" id="syncDot"></span><span id="syncText">本地</span></div>
+      <div class="header-badge" id="taskCounter">0 条</div>
+      <button class="btn-sm share" onclick="handleSyncClick()" id="syncBtn" title="同步到共享画廊">🔄 同步</button>
+      <button class="btn-sm export" onclick="exportGallery()" title="导出画廊数据">📤 导出</button>
+      <button class="btn-sm share" onclick="importGallery()" title="导入画廊数据">📥 导入</button>
+      <button class="btn-sm clear" onclick="confirmClearAll()" id="clearBtn">清空</button>
+      <button class="btn-icon" onclick="openSettings()" title="设置">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+  <main class="main" id="mainArea">
+    <div class="empty-state" id="emptyState"><div class="empty-icon">🎨</div><div class="empty-title">开始创作</div><div class="empty-desc">输入描述文字生成图片<br>拖拽图片到输入框进行图生图</div></div>
+    <div class="task-grid" id="taskGrid" style="display:none"></div>
+  </main>
+  <div class="input-area">
+    <div class="settings-row">
+      <div class="setting-group"><span class="setting-label">比例</span>
+        <select class="setting-select" id="sizeSelect">
+          <option value="1024x1024">1:1 正方形</option>
+          <option value="1024x1536">2:3 竖版</option>
+          <option value="1536x1024">3:2 横版</option>
+          <option value="1792x1024">16:9 宽屏</option>
+          <option value="1024x1792">9:16 长图</option>
+        </select>
+      </div>
+      <div class="setting-group"><span class="setting-label">质量</span>
+        <select class="setting-select" id="qualitySelect"><option value="medium">中等</option><option value="low">低</option><option value="high">高</option></select>
+      </div>
+      <div class="setting-group"><span class="setting-label">并行</span>
+        <select class="setting-select" id="parallelSelect"><option value="3">3 个</option><option value="5">5 个</option><option value="2">2 个</option><option value="1">1 个</option></select>
+      </div>
+      <div class="parallel-info"><span id="activeCount">0 进行中</span></div>
+    </div>
+    <div class="input-box">
+      <button class="upload-btn" onclick="fileInput.click()" title="上传参考图"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
+      <input type="file" id="fileInput" accept="image/*" style="display:none">
+      <div class="input-wrapper" id="inputWrapper">
+        <div class="drop-zone" id="dropZone"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><div class="drop-zone-text">释放图片进行图生图</div></div>
+        <div class="ref-preview" id="refPreview"><img class="ref-thumb" id="refThumb" src="" alt=""><span class="ref-label">参考图</span><button class="ref-remove" onclick="removeRefImage()">✕</button></div>
+        <textarea class="prompt-input" id="promptInput" placeholder="描述你想生成的图片..." rows="1"></textarea>
+      </div>
+      <button class="send-btn" onclick="submitTask()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+    </div>
+  </div>
+</div>
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightboxImg" src="" alt="">
+  <div class="lightbox-actions">
+    <button class="lightbox-action" onclick="downloadImage()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 下载</button>
+    <button class="lightbox-action" onclick="useAsReference()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> 用作参考图</button>
+  </div>
+</div>
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h3>⚙️ 设置</h3>
+    <div class="modal-field"><label>API 地址</label><input type="text" id="apiBaseInput" placeholder="https://llm-api.net/v1"></div>
+    <div class="modal-field"><label>API Key</label><input type="password" id="apiKeyInput" placeholder="sk-..."></div>
+    <hr class="modal-sep">
+    <h3>🌐 云同步（GitHub Gist）</h3>
+    <div class="modal-field"><label>GitHub Token</label><input type="password" id="githubTokenInput" placeholder="ghp_..."><div class="hint">用于写入共享画廊。前往 <a href="https://github.com/settings/tokens/new?scopes=gist" target="_blank">创建 Token</a>，只需勾选 gist 权限即可。</div></div>
+    <div class="modal-field"><label>画廊 Gist ID</label><input type="text" id="gistIdInput" placeholder="留空则自动创建"><div class="hint">输入已有的 Gist ID 加入画廊，或留空点击「创建画廊」自动新建。</div></div>
+    <div class="modal-actions">
+      <button class="modal-btn success" onclick="createGallery()">创建画廊</button>
+      <button class="modal-btn primary" onclick="joinGallery()">加入画廊</button>
+      <button class="modal-btn secondary" onclick="syncAllToGist()" id="syncAllBtn" style="display:none">🔄 同步全部</button>
+      <button class="modal-btn secondary" onclick="disconnectGallery()">断开</button>
+      <button class="modal-btn secondary" onclick="closeSettings()">关闭</button>
+    </div>
+  </div>
+</div>
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box"><p id="confirmMsg"></p><div class="confirm-actions"><button class="modal-btn secondary" onclick="closeConfirm()">取消</button><button class="modal-btn danger" id="confirmAction">确定</button></div></div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<input type="file" id="importFileInput" accept=".json" style="display:none">
+
+<script>
+// ==================== Config ====================
+let CONFIG = {
+  apiBase: localStorage.getItem('gis_apiBase') || 'https://llm-api.net/v1',
+  apiKey: localStorage.getItem('gis_apiKey') || 'sk-5k9qmAy7zbBPdarnvTrQXjlZOol9xc6QeEoW78jrDsmQrCJv',
+  githubToken: localStorage.getItem('gis_github_token') || '',
+  gistId: localStorage.getItem('gis_gist_id') || '',
+};
+
+// ==================== GitHub Gist Storage ====================
+const GistStore = {
+  syncing: false,
+
+  updateUI() {
+    const dot = document.getElementById('syncDot');
+    const text = document.getElementById('syncText');
+    const syncBtn = document.getElementById('syncBtn');
+    if (this.syncing) { dot.className = 'sync-dot syncing'; text.textContent = '同步中'; return; }
+    if (CONFIG.gistId) { dot.className = 'sync-dot ok'; text.textContent = '已同步'; }
+    else { dot.className = 'sync-dot off'; text.textContent = '本地'; }
+  },
+
+  async api(method, path, body) {
+    const headers = { 'Accept': 'application/vnd.github.v3+json' };
+    if (CONFIG.githubToken) headers['Authorization'] = `token ${CONFIG.githubToken}`;
+    if (body) headers['Content-Type'] = 'application/json';
+    const resp = await fetch(`https://api.github.com/gists${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    if (!resp.ok) { const t = await resp.text(); throw new Error(`GitHub API ${resp.status}: ${t.slice(0, 200)}`); }
+    return resp.json();
+  },
+
+  async create() {
+    if (!CONFIG.githubToken) throw new Error('请先填写 GitHub Token');
+    this.syncing = true; this.updateUI();
+    try {
+      const gist = await this.api('POST', '', {
+        description: 'GPT Image Studio 共享画廊',
+        public: true,
+        files: { 'gallery.json': { content: JSON.stringify({ tasks: [], version: 1 }) } }
+      });
+      CONFIG.gistId = gist.id;
+      localStorage.setItem('gis_gist_id', gist.id);
+      showToast('画廊创建成功！', 'success');
+      return gist.id;
+    } catch (e) { showToast('创建失败: ' + e.message, 'error'); return null; }
+    finally { this.syncing = false; this.updateUI(); }
+  },
+
+  async join(id) {
+    try {
+      this.syncing = true; this.updateUI();
+      const gist = await this.api('GET', `/${id}`);
+      CONFIG.gistId = gist.id;
+      localStorage.setItem('gis_gist_id', gist.id);
+      const content = gist.files?.['gallery.json']?.content;
+      const data = content ? JSON.parse(content) : { tasks: [] };
+      showToast('已加入画廊！', 'success');
+      return data.tasks || [];
+    } catch (e) { showToast('加入失败: ' + e.message, 'error'); return null; }
+    finally { this.syncing = false; this.updateUI(); }
+  },
+
+  async load() {
+    if (!CONFIG.gistId) return [];
+    try {
+      const gist = await this.api('GET', `/${CONFIG.gistId}`);
+      const content = gist.files?.['gallery.json']?.content;
+      return content ? (JSON.parse(content).tasks || []) : [];
+    } catch (e) { console.error('Gist load error:', e); return []; }
+  },
+
+  async save(tasks) {
+    if (!CONFIG.gistId || !CONFIG.githubToken) return;
+    try {
+      this.syncing = true; this.updateUI();
+      await this.api('PATCH', `/${CONFIG.gistId}`, {
+        files: { 'gallery.json': { content: JSON.stringify({ tasks, version: 1 }) } }
+      });
+    } catch (e) { console.error('Gist save error:', e); showToast('同步失败: ' + e.message, 'error'); }
+    finally { this.syncing = false; this.updateUI(); }
+  },
+
+  async addTask(task) {
+    if (!CONFIG.gistId) return;
+    try {
+      const tasks = await this.load();
+      const thumb = task.imageData ? await compressImage(task.imageData, 480, 0.6) : null;
+      tasks.unshift({ id: task.id, prompt: task.prompt, size: task.size, quality: task.quality, hasRef: task.hasRef, status: task.status, createdAt: task.createdAt.getTime(), thumbnail: thumb });
+      if (tasks.length > 80) tasks.length = 80;
+      await this.save(tasks);
+    } catch (e) { console.error('Gist add error:', e); }
+  },
+
+  async removeTask(taskId) {
+    if (!CONFIG.gistId) return;
+    const tasks = await this.load();
+    await this.save(tasks.filter(t => t.id !== taskId));
+  },
+
+  async clearAll() { if (CONFIG.gistId) await this.save([]); },
+
+  disconnect() {
+    CONFIG.gistId = ''; CONFIG.githubToken = '';
+    localStorage.removeItem('gis_gist_id'); localStorage.removeItem('gis_github_token');
+    this.updateUI();
+  }
+};
+
+// ==================== Image Compression ====================
+function compressImage(dataUrl, maxSize = 480, quality = 0.6) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > maxSize || h > maxSize) { if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; } else { w = Math.round(w * maxSize / h); h = maxSize; } }
+      c.width = w; c.height = h; c.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(c.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(null);
+    img.src = dataUrl;
+  });
+}
+
+// ==================== IndexedDB ====================
+const DB_NAME = 'GptImageStudio', DB_VERSION = 1, STORE_NAME = 'images';
+let db = null;
+function openDB() { return new Promise((r, j) => { const req = indexedDB.open(DB_NAME, DB_VERSION); req.onupgradeneeded = (e) => { const d = e.target.result; if (!d.objectStoreNames.contains(STORE_NAME)) d.createObjectStore(STORE_NAME, { keyPath: 'id' }); }; req.onsuccess = (e) => { db = e.target.result; r(db); }; req.onerror = (e) => j(e.target.error); }); }
+function dbPut(d) { return new Promise((r, j) => { const tx = db.transaction(STORE_NAME, 'readwrite'); tx.objectStore(STORE_NAME).put(d); tx.oncomplete = () => r(); tx.onerror = (e) => j(e.target.error); }); }
+function dbGet(id) { return new Promise((r, j) => { const req = db.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME).get(id); req.onsuccess = () => r(req.result); req.onerror = (e) => j(e.target.error); }); }
+function dbDelete(id) { return new Promise((r, j) => { const tx = db.transaction(STORE_NAME, 'readwrite'); tx.objectStore(STORE_NAME).delete(id); tx.oncomplete = () => r(); tx.onerror = (e) => j(e.target.error); }); }
+function dbClear() { return new Promise((r, j) => { const tx = db.transaction(STORE_NAME, 'readwrite'); tx.objectStore(STORE_NAME).clear(); tx.oncomplete = () => r(); tx.onerror = (e) => j(e.target.error); }); }
+async function saveTaskImage(id, d) { try { await dbPut({ id, data: d }); } catch(e) {} }
+async function loadTaskImage(id) { try { const r = await dbGet(id); return r ? r.data : null; } catch(e) { return null; } }
+async function deleteTaskImage(id) { try { await dbDelete(id); } catch(e) {} }
+
+// ==================== State ====================
+let tasks = [], taskIdCounter = 0, refImageFile = null, refImageBase64 = null, currentLightboxTaskId = null;
+
+function saveTasksMeta() {
+  localStorage.setItem('gis_tasks', JSON.stringify(tasks.map(t => ({ id: t.id, prompt: t.prompt, size: t.size, quality: t.quality, hasRef: t.hasRef, refBase64: t.refBase64 || null, status: t.status === 'generating' ? 'pending' : t.status, error: t.error || null, createdAt: t.createdAt.getTime() }))));
+  localStorage.setItem('gis_counter', String(taskIdCounter));
+}
+function loadTasksMeta() {
+  try { const r = localStorage.getItem('gis_tasks'), c = localStorage.getItem('gis_counter'); if (c) taskIdCounter = parseInt(c) || 0; if (!r) return []; return JSON.parse(r).map(m => ({ id: m.id, prompt: m.prompt, size: m.size, quality: m.quality, hasRef: m.hasRef, refFile: m.refBase64 ? dataURLtoFile(m.refBase64, 'ref.png') : null, refBase64: m.refBase64 || null, status: m.status, imageData: null, error: m.error || null, createdAt: new Date(m.createdAt), startTime: null, _imageLoaded: false, isLocal: true })); } catch(e) { return []; }
+}
+
+// ==================== DOM ====================
+const promptInput = document.getElementById('promptInput'), inputWrapper = document.getElementById('inputWrapper');
+const dropZone = document.getElementById('dropZone'), refPreview = document.getElementById('refPreview');
+const refThumb = document.getElementById('refThumb'), fileInput = document.getElementById('fileInput');
+const taskGrid = document.getElementById('taskGrid'), emptyState = document.getElementById('emptyState');
+const sizeSelect = document.getElementById('sizeSelect'), qualitySelect = document.getElementById('qualitySelect');
+const parallelSelect = document.getElementById('parallelSelect');
+const lightbox = document.getElementById('lightbox'), lightboxImg = document.getElementById('lightboxImg');
+const settingsModal = document.getElementById('settingsModal'), activeCountEl = document.getElementById('activeCount');
+const taskCounterEl = document.getElementById('taskCounter'), clearBtn = document.getElementById('clearBtn');
+const importFileInput = document.getElementById('importFileInput');
+
+promptInput.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 120) + 'px'; });
+promptInput.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitTask(); } });
+
+// Drag & Drop
+let dragCounter = 0;
+inputWrapper.addEventListener('dragenter', function(e) { e.preventDefault(); dragCounter++; if (e.dataTransfer.types?.includes('Files')) { dropZone.classList.add('show'); inputWrapper.classList.add('drag-over'); } });
+inputWrapper.addEventListener('dragleave', function(e) { e.preventDefault(); dragCounter--; if (!dragCounter) { dropZone.classList.remove('show'); inputWrapper.classList.remove('drag-over'); } });
+inputWrapper.addEventListener('dragover', function(e) { e.preventDefault(); });
+inputWrapper.addEventListener('drop', function(e) { e.preventDefault(); dragCounter = 0; dropZone.classList.remove('show'); inputWrapper.classList.remove('drag-over'); const f = e.dataTransfer.files; if (f.length && f[0].type.startsWith('image/')) setRefImage(f[0]); });
+fileInput.addEventListener('change', function() { if (this.files.length) setRefImage(this.files[0]); });
+function setRefImage(file) { refImageFile = file; const r = new FileReader(); r.onload = (e) => { refImageBase64 = e.target.result; refThumb.src = e.target.result; refPreview.classList.add('show'); }; r.readAsDataURL(file); showToast('已添加参考图', 'info'); }
+function removeRefImage() { refImageFile = null; refImageBase64 = null; refPreview.classList.remove('show'); fileInput.value = ''; }
+function dataURLtoFile(u, n) { const a = u.split(','), m = a[0].match(/:(.*?);/)[1], b = atob(a[1]); let l = b.length; const u8 = new Uint8Array(l); while(l--) u8[l] = b.charCodeAt(l); return new File([u8], n, {type:m}); }
+
+// ==================== Task ====================
+async function createTask(prompt, size, quality, hasRef) {
+  const id = ++taskIdCounter;
+  const task = { id, prompt, size, quality, hasRef, refFile: refImageFile, refBase64: refImageBase64, status: 'pending', imageData: null, error: null, createdAt: new Date(), startTime: null, _imageLoaded: false, isLocal: true };
+  tasks.unshift(task); saveTasksMeta(); updateUI(); processQueue();
+}
+function updateTask(id, u) { const t = tasks.find(x => x.id === id); if (t) { Object.assign(t, u); saveTasksMeta(); updateUI(); } }
+
+async function processQueue() {
+  const max = parseInt(parallelSelect.value) || 3;
+  const gen = tasks.filter(t => t.status === 'generating');
+  activeCountEl.textContent = `${gen.length} 进行中`;
+  const slots = max - gen.length; if (slots <= 0) return;
+  for (const t of tasks.filter(t => t.status === 'pending' && t.isLocal).slice(0, slots)) executeTask(t);
+}
+
+async function executeTask(task) {
+  updateTask(task.id, { status: 'generating', startTime: Date.now() });
+  try {
+    const r = task.hasRef && task.refFile ? await callEditAPI(task) : await callGenerateAPI(task);
+    if (r?.imageData) { await saveTaskImage(task.id, r.imageData); updateTask(task.id, { status: 'success', imageData: r.imageData, _imageLoaded: true }); showToast('生成成功！', 'success'); GistStore.addTask(task); }
+    else throw new Error('API 返回数据为空');
+  } catch (e) { updateTask(task.id, { status: 'failed', error: e.message || '生成失败' }); showToast(`生成失败: ${e.message}`, 'error'); }
+  processQueue();
+}
+
+async function callGenerateAPI(t) {
+  const r = await fetch(`${CONFIG.apiBase}/images/generations`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${CONFIG.apiKey}` }, body: JSON.stringify({ model: 'gpt-image-2', prompt: t.prompt, size: t.size, quality: t.quality, response_format: 'b64_json' }) });
+  if (!r.ok) { const x = await r.text(); let m = `HTTP ${r.status}`; try { m = JSON.parse(x).error?.message || m; } catch {} throw new Error(m); }
+  const d = await r.json(); if (d.data?.[0]?.b64_json) return { imageData: `data:image/png;base64,${d.data[0].b64_json}` }; throw new Error('无图片数据');
+}
+async function callEditAPI(t) {
+  const fd = new FormData(); fd.append('model', 'gpt-image-2'); fd.append('prompt', t.prompt); fd.append('image', t.refFile); fd.append('size', t.size);
+  const r = await fetch(`${CONFIG.apiBase}/images/edits`, { method: 'POST', headers: { 'Authorization': `Bearer ${CONFIG.apiKey}` }, body: fd });
+  if (!r.ok) { const x = await r.text(); let m = `HTTP ${r.status}`; try { m = JSON.parse(x).error?.message || m; } catch {} throw new Error(m); }
+  const d = await r.json(); if (d.data?.[0]?.b64_json) return { imageData: `data:image/png;base64,${d.data[0].b64_json}` }; if (d.data?.[0]?.url) return { imageData: d.data[0].url }; throw new Error('无图片数据');
+}
+
+async function regenerateTask(id) { const t = tasks.find(x => x.id === id); if (!t) return; updateTask(id, { status: 'pending', imageData: null, error: null, refFile: t.refBase64 ? dataURLtoFile(t.refBase64, 'ref.png') : t.refFile, isLocal: true }); processQueue(); }
+async function deleteTask(id) { const i = tasks.findIndex(x => x.id === id); if (i < 0) return; const t = tasks[i]; tasks.splice(i, 1); saveTasksMeta(); if (t.isLocal) await deleteTaskImage(id); await GistStore.removeTask(id); updateUI(); showToast('已删除', 'info'); }
+
+function submitTask() { const p = promptInput.value.trim(); if (!p) { showToast('请输入描述', 'error'); promptInput.focus(); return; } createTask(p, sizeSelect.value, qualitySelect.value, !!refImageFile); promptInput.value = ''; promptInput.style.height = 'auto'; }
+
+// ==================== UI ====================
+const SIZE_LABELS = { '1024x1024':'1:1', '1024x1536':'2:3', '1536x1024':'3:2', '1792x1024':'16:9', '1024x1792':'9:16' };
+
+function updateUI() {
+  taskCounterEl.textContent = `${tasks.length} 条`; clearBtn.style.display = tasks.length ? '' : 'none';
+  if (!tasks.length) { emptyState.style.display = 'flex'; taskGrid.style.display = 'none'; return; }
+  emptyState.style.display = 'none'; taskGrid.style.display = 'grid';
+  taskGrid.innerHTML = tasks.map(renderTaskCard).join('');
+  tasks.forEach(t => { if (t.status === 'success' && !t._imageLoaded && !t._loading) { t._loading = true; if (t.isLocal) loadTaskImage(t.id).then(d => { if (d) { t.imageData = d; t._imageLoaded = true; } t._loading = false; patchCard(t); }); else { t._imageLoaded = !!t.thumbnail; t._loading = false; if (t.thumbnail) { t.imageData = t.thumbnail; patchCard(t); } } } });
+}
+
+function patchCard(task) {
+  const card = document.querySelector(`.task-card[data-id="${task.id}"]`); if (!card) return;
+  const wrap = card.querySelector('.task-image-wrap'); if (!wrap) return;
+  wrap.innerHTML = buildImgArea(task); if (task.status === 'success' && task.imageData) wrap.onclick = () => openLightbox(task.id);
+}
+
+function buildImgArea(t) {
+  let h = '';
+  if (!t.isLocal) h += '<div class="shared-badge">🌐 共享</div>';
+  h += `<button class="task-delete" onclick="event.stopPropagation();deleteTask(${t.id})">✕</button>`;
+  if (t.status === 'generating') { const e = t.startTime ? Math.floor((Date.now() - t.startTime) / 1000) : 0; h += `<div class="task-loading"><div class="spinner"></div><div class="loading-text">生成中... ${e}s</div></div><div class="progress-bar" style="width:${Math.min(e*2,90)}%"></div>`; }
+  else if (t.status === 'failed') h += `<div class="task-failed-overlay"><div class="error-icon">⚠</div><div class="error-msg">${esc(t.error||'生成失败')}</div><button class="btn-regen" onclick="event.stopPropagation();regenerateTask(${t.id})"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>重新生成</button></div>`;
+  else if (t.status === 'success' && t._imageLoaded && t.imageData) h += `<img src="${t.imageData}" loading="lazy"><div class="image-actions"><button class="img-action-btn" onclick="event.stopPropagation();downloadTaskImage(${t.id})" title="下载"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button><button class="img-action-btn" onclick="event.stopPropagation();copyPrompt(${t.id})" title="复制"><svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2M9 2h6a1 1 0 011 1v2a1 1 0 01-1 1H9a1 1 0 01-1-1V3a1 1 0 011-1z"/></svg></button><button class="img-action-btn" onclick="event.stopPropagation();useTaskAsRef(${t.id})" title="参考"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button></div>`;
+  else h += `<div class="task-loading"><div class="spinner" style="border-top-color:var(--success)"></div><div class="loading-text">加载中...</div></div>`;
+  return h;
+}
+
+function renderTaskCard(t) {
+  const time = t.createdAt.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return `<div class="task-card ${t.status}" data-id="${t.id}"><div class="task-image-wrap">${buildImgArea(t)}</div><div class="task-info"><div class="task-prompt">${esc(t.prompt)}</div><div class="task-meta"><span class="meta-tag size">${SIZE_LABELS[t.size]||t.size}</span><span class="meta-tag quality">${t.quality}</span>${t.hasRef?'<span class="meta-tag img2img">图生图</span>':''}${!t.isLocal?'<span class="meta-tag" style="background:rgba(0,210,160,.1);color:var(--success)">共享</span>':''}<span class="meta-time">${time}</span></div></div></div>`;
+}
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ==================== Lightbox ====================
+async function openLightbox(id) { const t = tasks.find(x => x.id === id); if (!t) return; if (!t.imageData && t.isLocal) { t.imageData = await loadTaskImage(t.id); t._imageLoaded = !!t.imageData; } if (!t.imageData) return; currentLightboxTaskId = id; lightboxImg.src = t.imageData; lightbox.classList.add('show'); document.body.style.overflow = 'hidden'; }
+function closeLightbox(e) { if (e && e.target !== lightbox && !e.target.classList.contains('lightbox-close')) return; lightbox.classList.remove('show'); document.body.style.overflow = ''; currentLightboxTaskId = null; }
+function downloadImage() { if (currentLightboxTaskId) downloadTaskImage(currentLightboxTaskId); }
+function useAsReference() { if (currentLightboxTaskId) { useTaskAsRef(currentLightboxTaskId); closeLightbox(); } }
+async function downloadTaskImage(id) { const t = tasks.find(x => x.id === id); if (!t) return; if (!t.imageData && t.isLocal) { t.imageData = await loadTaskImage(t.id); t._imageLoaded = !!t.imageData; } if (!t.imageData) return; const a = document.createElement('a'); a.href = t.imageData; a.download = `gpt-image-${t.id}.png`; document.body.appendChild(a); a.click(); a.remove(); showToast('已下载', 'success'); }
+function copyPrompt(id) { const t = tasks.find(x => x.id === id); if (!t) return; navigator.clipboard.writeText(t.prompt).then(() => showToast('已复制', 'success')).catch(() => showToast('复制失败', 'error')); }
+async function useTaskAsRef(id) { const t = tasks.find(x => x.id === id); if (!t) return; if (!t.imageData && t.isLocal) { t.imageData = await loadTaskImage(t.id); t._imageLoaded = !!t.imageData; } if (!t.imageData) return; refImageFile = dataURLtoFile(t.imageData, `t-${t.id}.png`); refImageBase64 = t.imageData; refThumb.src = t.imageData; refPreview.classList.add('show'); showToast('已设为参考图', 'info'); promptInput.focus(); }
+
+// ==================== Export / Import ====================
+async function exportGallery() {
+  const successTasks = tasks.filter(t => t.status === 'success');
+  const exportData = [];
+  for (const t of successTasks) {
+    if (!t.imageData && t.isLocal) { t.imageData = await loadTaskImage(t.id); t._imageLoaded = !!t.imageData; }
+    if (!t.imageData) continue;
+    const thumb = await compressImage(t.imageData, 640, 0.7);
+    exportData.push({ id: t.id, prompt: t.prompt, size: t.size, quality: t.quality, hasRef: t.hasRef, createdAt: t.createdAt.getTime(), thumbnail: thumb });
+  }
+  const json = JSON.stringify({ version: 1, tasks: exportData, exportedAt: Date.now() });
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `gpt-image-gallery-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+  showToast(`已导出 ${exportData.length} 条记录`, 'success');
+}
+
+function importGallery() { importFileInput.click(); }
+importFileInput.addEventListener('change', async function() {
+  if (!this.files.length) return;
+  try {
+    const text = await this.files[0].text();
+    const data = JSON.parse(text);
+    if (!data.tasks?.length) { showToast('文件中没有记录', 'error'); return; }
+    const newTasks = data.tasks.map(t => ({
+      id: ++taskIdCounter, prompt: t.prompt, size: t.size, quality: t.quality,
+      hasRef: t.hasRef || false, refFile: null, refBase64: null, status: 'success',
+      imageData: t.thumbnail || null, error: null, createdAt: new Date(t.createdAt),
+      startTime: null, _imageLoaded: !!t.thumbnail, thumbnail: t.thumbnail, isLocal: false
+    }));
+    tasks = [...newTasks, ...tasks]; saveTasksMeta(); updateUI();
+    showToast(`已导入 ${newTasks.length} 条记录`, 'success');
+  } catch (e) { showToast('导入失败: ' + e.message, 'error'); }
+  this.value = '';
+});
+
+// ==================== Settings ====================
+function openSettings() {
+  document.getElementById('apiBaseInput').value = CONFIG.apiBase;
+  document.getElementById('apiKeyInput').value = CONFIG.apiKey;
+  document.getElementById('githubTokenInput').value = CONFIG.githubToken;
+  document.getElementById('gistIdInput').value = CONFIG.gistId;
+  document.getElementById('syncAllBtn').style.display = CONFIG.gistId ? '' : 'none';
+  settingsModal.classList.add('show');
+}
+function closeSettings() { settingsModal.classList.remove('show'); }
+async function createGallery() {
+  const token = document.getElementById('githubTokenInput').value.trim();
+  if (token) { CONFIG.githubToken = token; localStorage.setItem('gis_github_token', token); }
+  const id = await GistStore.create();
+  if (id) {
+    document.getElementById('gistIdInput').value = id;
+    // Auto sync all existing local success tasks
+    await syncAllToGist();
+  }
+}
+
+async function handleSyncClick() {
+  if (!CONFIG.gistId || !CONFIG.githubToken) {
+    showToast('请先在设置中创建或加入画廊', 'info');
+    openSettings();
+    return;
+  }
+  await syncAllToGist();
+}
+
+async function syncAllToGist() {
+  if (!CONFIG.gistId || !CONFIG.githubToken) { showToast('请先创建画廊', 'error'); return; }
+  const localSuccess = tasks.filter(t => t.isLocal && t.status === 'success');
+  if (!localSuccess.length) { showToast('没有本地记录可同步', 'info'); return; }
+  showToast(`正在同步 ${localSuccess.length} 条记录...`, 'info');
+  // Load existing Gist data first
+  let gistTasks = await GistStore.load();
+  const gistIds = new Set(gistTasks.map(t => t.id));
+  let added = 0;
+  for (const task of localSuccess) {
+    if (gistIds.has(task.id)) continue;
+    if (!task.imageData) { task.imageData = await loadTaskImage(task.id); task._imageLoaded = !!task.imageData; }
+    const thumb = task.imageData ? await compressImage(task.imageData, 480, 0.6) : null;
+    gistTasks.unshift({ id: task.id, prompt: task.prompt, size: task.size, quality: task.quality, hasRef: task.hasRef, status: task.status, createdAt: task.createdAt.getTime(), thumbnail: thumb });
+    added++;
+  }
+  if (gistTasks.length > 80) gistTasks.length = 80;
+  if (added > 0) {
+    await GistStore.save(gistTasks);
+    showToast(`已同步 ${added} 条记录到画廊！`, 'success');
+  } else {
+    showToast('所有记录已是最新', 'info');
+  }
+}
+async function joinGallery() {
+  const token = document.getElementById('githubTokenInput').value.trim();
+  const id = document.getElementById('gistIdInput').value.trim();
+  if (token) { CONFIG.githubToken = token; localStorage.setItem('gis_github_token', token); }
+  if (!id) { showToast('请输入 Gist ID', 'error'); return; }
+  const shared = await GistStore.join(id);
+  if (shared) {
+    closeSettings();
+    if (shared.length === 0) {
+      showToast('画廊已连接，但暂无记录。让对方点击「🔄 同步全部」上传记录', 'info');
+    } else {
+      await mergeShared(shared);
+    }
+  }
+}
+function disconnectGallery() { GistStore.disconnect(); closeSettings(); showToast('已断开云同步', 'info'); }
+
+async function syncSharedTasks() {
+  if (!CONFIG.gistId) return;
+  const shared = await GistStore.load();
+  if (shared.length) await mergeShared(shared);
+}
+
+async function mergeShared(shared) {
+  const localIds = new Set(tasks.filter(t => t.isLocal).map(t => t.id));
+  const newShared = shared.filter(st => !localIds.has(st.id)).map(st => ({
+    id: st.id, prompt: st.prompt, size: st.size, quality: st.quality,
+    hasRef: st.hasRef || false, refFile: null, refBase64: null, status: st.status || 'success',
+    imageData: st.thumbnail || null, error: null, createdAt: new Date(st.createdAt),
+    startTime: null, _imageLoaded: !!st.thumbnail, thumbnail: st.thumbnail, isLocal: false
+  }));
+  tasks = [...tasks, ...newShared].sort((a, b) => b.createdAt - a.createdAt);
+  updateUI();
+}
+
+// ==================== Confirm ====================
+function confirmClearAll() {
+  document.getElementById('confirmMsg').textContent = '确定要清空所有历史记录吗？';
+  const btn = document.getElementById('confirmAction'); btn.textContent = '清空';
+  btn.onclick = async () => { tasks = []; taskIdCounter = 0; saveTasksMeta(); await dbClear(); await GistStore.clearAll(); updateUI(); closeConfirm(); showToast('已清空', 'info'); };
+  document.getElementById('confirmOverlay').classList.add('show');
+}
+function closeConfirm() { document.getElementById('confirmOverlay').classList.remove('show'); }
+
+// ==================== Toast ====================
+function showToast(msg, type = 'info') { const c = document.getElementById('toastContainer'), t = document.createElement('div'); t.className = `toast ${type}`; t.textContent = msg; c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; t.style.transition = 'all .3s'; setTimeout(() => t.remove(), 300); }, 3000); }
+
+// ==================== Timer ====================
+setInterval(() => { if (tasks.some(t => t.status === 'generating')) updateUI(); }, 2000);
+
+// ==================== Keyboard ====================
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { if (lightbox.classList.contains('show')) closeLightbox(); if (settingsModal.classList.contains('show')) closeSettings(); if (document.getElementById('confirmOverlay').classList.contains('show')) closeConfirm(); } });
+settingsModal.addEventListener('click', function(e) { if (e.target === settingsModal) closeSettings(); });
+document.getElementById('confirmOverlay').addEventListener('click', function(e) { if (e.target === document.getElementById('confirmOverlay')) closeConfirm(); });
+
+// ==================== Init ====================
+async function init() {
+  await openDB(); GistStore.updateUI();
+  tasks = loadTasksMeta(); updateUI();
+  // Auto sync if gist is configured
+  if (CONFIG.gistId) await syncSharedTasks();
+  // Resume pending
+  if (tasks.some(t => t.status === 'pending' && t.isLocal)) processQueue();
+}
+init();
+</script>
+</body>
+</html>
