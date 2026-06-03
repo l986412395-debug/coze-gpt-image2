@@ -386,10 +386,10 @@ a{color:var(--accent2);text-decoration:none}
           <!-- 图片上传 -->
           <div class="card">
             <div class="card-title"><span class="icon">🖼️</span>图片上传</div>
-            <p style="font-size:12px;color:var(--t3);margin-bottom:10px">上传商品图作为视频首帧，可选上传尾帧图实现双帧约束</p>
+            <p style="font-size:12px;color:var(--t3);margin-bottom:10px">上传商品图作为视频首帧（可选），不上传图片则为纯文字生成视频。可选上传尾帧图实现双帧约束</p>
             
             <!-- 首帧图 -->
-            <div class="form-label" style="margin-bottom:6px">首帧图（必填）</div>
+            <div class="form-label" style="margin-bottom:6px">首帧图（可选，不上传则文生视频）</div>
             <div class="upload-zone" id="startFrameUpload" onclick="document.getElementById('startFrameFile').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleStartFrameDrop(event)">
               <div class="upload-icon">🎬</div>
               <div class="upload-text">点击上传视频起始帧图片</div>
@@ -1278,7 +1278,7 @@ function removeEndFrame() {
 async function createVideo() {
   const prompt = document.getElementById('videoPrompt').value.trim();
   if (!prompt) return toast('请输入视频提示词', 'error');
-  if (!State.startFrameUrl) return toast('请上传首帧图', 'error');
+  
 
   const btn = document.getElementById('createVideoBtn');
   const spinner = document.getElementById('videoSpinner');
