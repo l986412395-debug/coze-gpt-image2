@@ -784,6 +784,10 @@ document.addEventListener('DOMContentLoaded', () => {
   loadSettings();
   loadHistory();
   updateApiStatus();
+  // 首次使用（未配置API Key）自动弹出设置面板
+  if (!State.settings.grokApiKey && !State.settings.volcToken) {
+    setTimeout(() => openSettings(), 500);
+  }
 });
 
 // ============ 设置面板 ============
@@ -834,12 +838,17 @@ function togglePassword(inputId) {
 function updateApiStatus() {
   const dot = document.getElementById('apiStatusDot');
   const text = document.getElementById('apiStatusText');
-  if (State.settings.volcToken) {
+  const hasVolc = !!State.settings.volcToken;
+  const hasGrok = !!State.settings.grokApiKey;
+  if (hasVolc || hasGrok) {
     dot.className = 'config-dot connected';
-    text.textContent = 'API已配置';
+    const engines = [];
+    if (hasVolc) engines.push('火山方舟');
+    if (hasGrok) engines.push('Grok视频');
+    text.textContent = engines.join(' + ') + ' 已配置';
   } else {
     dot.className = 'config-dot disconnected';
-    text.textContent = '请先在设置中配置API';
+    text.textContent = '⚠️ 请先配置API（点右上角⚙️）';
   }
 }
 
@@ -946,7 +955,12 @@ async function grokVideoAPI(endpoint, body, method = 'POST') {
   
   const data = await res.json();
   if (data.error) {
-    throw new Error(data.error.message || 'Grok API请求失败');
+    const errMsg = data.error.message || 'Grok API请求失败';
+    console.error('Grok API错误:', JSON.stringify(data.error));
+    throw new Error(errMsg);
+  }
+  if (!res.ok) {
+    throw new Error(`Grok API返回 ${res.status}: ${JSON.stringify(data).slice(0,200)}`);
   }
   
   return data;
