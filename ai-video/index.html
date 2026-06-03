@@ -1361,8 +1361,8 @@ async function createVideo() {
       status: 'processing',
       provider,
       prompt,
-      imageUrl: State.startFrameUrl,
-      endImageUrl: State.endFrameUrl,
+      imageUrl: State.startFrameUrl && !State.startFrameUrl.startsWith("data:") ? State.startFrameUrl : null,
+      endImageUrl: State.endFrameUrl && !State.endFrameUrl.startsWith("data:") ? State.endFrameUrl : null,
       ratio: State.ratio,
       duration: State.duration,
       quality: State.quality,
@@ -1836,7 +1836,26 @@ function saveToHistory(record) {
   if (State.history.length > MAX_HISTORY) {
     State.history = State.history.slice(0, MAX_HISTORY);
   }
-  localStorage.setItem('aiVideoHistory', JSON.stringify(State.history));
+  safeSaveHistory();
+}
+
+function safeSaveHistory() {
+  try {
+    safeSaveHistory();
+  } catch(e) {
+    // localStorage满了，逐步删除旧记录直到能存下
+    console.warn('localStorage空间不足，清理旧记录...');
+    while (State.history.length > 1) {
+      State.history.pop();
+      try {
+        safeSaveHistory();
+        return;
+      } catch(e2) {}
+    }
+    // 实在不行就清空
+    State.history = [];
+    localStorage.removeItem('aiVideoHistory');
+  }
 }
 
 function updateHistoryStatus(taskId, status, videoUrl) {
@@ -1845,7 +1864,7 @@ function updateHistoryStatus(taskId, status, videoUrl) {
     record.status = status;
     if (videoUrl) record.videoUrl = videoUrl;
     record.updatedAt = new Date().toISOString();
-    localStorage.setItem('aiVideoHistory', JSON.stringify(State.history));
+    safeSaveHistory();
   }
 }
 
@@ -1877,7 +1896,7 @@ function renderHistory() {
 
 function deleteHistory(id) {
   State.history = State.history.filter(h => h.id !== id);
-  localStorage.setItem('aiVideoHistory', JSON.stringify(State.history));
+  safeSaveHistory();
   renderHistory();
   toast('已删除', 'success');
 }
@@ -1885,7 +1904,7 @@ function deleteHistory(id) {
 function clearHistory() {
   if (!confirm('确定清空所有历史记录？')) return;
   State.history = [];
-  localStorage.setItem('aiVideoHistory', JSON.stringify(State.history));
+  safeSaveHistory();
   renderHistory();
   toast('历史已清空', 'success');
 }
