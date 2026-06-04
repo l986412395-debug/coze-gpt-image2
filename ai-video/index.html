@@ -666,7 +666,9 @@ SK-II神仙水|护肤精华水|美妆个护"></textarea>
       <div class="card">
         <div class="card-title"><span class="icon">📋</span>视频生成历史</div>
         <div class="btn-group" style="margin-bottom:16px">
-          <button class="btn btn-secondary btn-sm" onclick="loadHistory()">🔄 刷新</button>
+          <button class="btn btn-secondary btn-sm" onclick="loadHistory();renderHistory()">🔄 刷新</button>
+          <button class="btn btn-secondary btn-sm" onclick="syncFromCloud()">☁️ 拉取云端</button>
+          <button class="btn btn-secondary btn-sm" onclick="syncToCloud()">☁️ 推送云端</button>
           <button class="btn btn-danger btn-sm" onclick="clearHistory()">🗑️ 清空全部</button>
         </div>
         <div id="historyList">
@@ -726,6 +728,27 @@ SK-II神仙水|护肤精华水|美妆个护"></textarea>
           <input type="text" id="grokBaseUrl" placeholder="https://llm-api.net/v1">
           <div class="settings-hint">Grok API 服务地址（末尾不要带/）</div>
         </div>
+      <!-- 云同步设置 -->
+      <div class="settings-section">
+        <div class="settings-section-title">☁️ 云同步（共享历史记录）</div>
+        <div class="settings-item">
+          <label>你的昵称</label>
+          <input type="text" id="syncUsername" placeholder="输入你的名字，方便同事识别">
+          <div class="settings-hint">用于标识是谁创建的视频</div>
+        </div>
+        <div class="settings-item">
+          <label>GitHub Token</label>
+          <div class="password-wrapper">
+            <input type="password" id="syncGithubToken" placeholder="ghp_xxxxxxxxxx">
+            <button class="password-toggle" onclick="togglePassword('syncGithubToken')">👁️</button>
+          </div>
+          <div class="settings-hint">用于读写共享历史（需要repo权限）</div>
+        </div>
+        <div class="settings-item" style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-secondary" onclick="syncFromCloud()" style="font-size:12px;padding:6px 12px">⬇️ 拉取云端记录</button>
+          <button class="btn btn-secondary" onclick="syncToCloud()" style="font-size:12px;padding:6px 12px">⬆️ 推送本地记录</button>
+          <span id="syncStatus" style="font-size:11px;color:var(--t3)"></span>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -754,7 +777,9 @@ const State = {
     volcProModel: 'doubao-seed-2-0-pro-260215',
     seedanceModel: 'doubao-seedance-2-0-260128',
     grokApiKey: '',
-    grokBaseUrl: 'https://llm-api.net/v1'
+    grokBaseUrl: 'https://llm-api.net/v1',
+    syncUsername: '',
+    syncGithubToken: ''
   },
   // 运行时状态
   style: '写实带货',
@@ -784,6 +809,8 @@ document.addEventListener('DOMContentLoaded', () => {
   loadSettings();
   loadHistory();
   updateApiStatus();
+  // 自动从云端拉取历史（静默，不阻塞）
+  syncFromCloud().catch(e => console.log('自动同步跳过:', e.message));
   // 首次使用（未配置API Key）自动弹出设置面板
   if (!State.settings.grokApiKey && !State.settings.volcToken) {
     setTimeout(() => openSettings(), 500);
@@ -800,6 +827,8 @@ function openSettings() {
   document.getElementById('seedanceModel').value = State.settings.seedanceModel;
   document.getElementById('grokApiKey').value = State.settings.grokApiKey;
   document.getElementById('grokBaseUrl').value = State.settings.grokBaseUrl;
+  document.getElementById('syncUsername').value = State.settings.syncUsername || '';
+  document.getElementById('syncGithubToken').value = State.settings.syncGithubToken || '';
 }
 
 function closeSettings() {
@@ -813,6 +842,8 @@ function saveSettings() {
   State.settings.seedanceModel = document.getElementById('seedanceModel').value.trim() || 'doubao-seedance-2-0-260128';
   State.settings.grokApiKey = document.getElementById('grokApiKey').value.trim();
   State.settings.grokBaseUrl = document.getElementById('grokBaseUrl').value.trim() || 'https://llm-api.net/v1';
+  State.settings.syncUsername = document.getElementById('syncUsername').value.trim() || '匿名用户';
+  State.settings.syncGithubToken = document.getElementById('syncGithubToken').value.trim();
   
   localStorage.setItem('aiVideoSettings', JSON.stringify(State.settings));
   updateApiStatus();
@@ -1381,6 +1412,7 @@ async function createVideo() {
       duration: State.duration,
       quality: State.quality,
       productName: document.getElementById('productName')?.value || '',
+      username: State.settings.syncUsername || '匿名用户',
       createdAt: new Date().toISOString()
     });
 
@@ -1455,6 +1487,8 @@ async function startPolling(taskId, provider) {
           
           // 更新历史记录
           updateHistoryStatus(taskId, 'succeeded', videoUrl);
+          // 自动推送到云端
+          syncToCloud().catch(e => console.log('自动推送跳过:', e.message));
         } else {
           toast('视频URL未返回', 'error');
         }
@@ -1855,14 +1889,14 @@ function saveToHistory(record) {
 
 function safeSaveHistory() {
   try {
-    safeSaveHistory();
+    localStorage.setItem('aiVideoHistory', JSON.stringify(State.history));
   } catch(e) {
     // localStorage满了，逐步删除旧记录直到能存下
     console.warn('localStorage空间不足，清理旧记录...');
     while (State.history.length > 1) {
       State.history.pop();
       try {
-        safeSaveHistory();
+        localStorage.setItem('aiVideoHistory', JSON.stringify(State.history));
         return;
       } catch(e2) {}
     }
@@ -1870,6 +1904,146 @@ function safeSaveHistory() {
     State.history = [];
     localStorage.removeItem('aiVideoHistory');
   }
+}
+
+
+// ============ 云同步功能 ============
+const SYNC_REPO = 'l986412395-debug/coze-gpt-image2';
+const SYNC_PATH = 'ai-video/history.json';
+const SYNC_RAW_URL = `https://raw.githubusercontent.com/${SYNC_REPO}/main/${SYNC_PATH}`;
+
+// 从云端拉取历史记录
+async function syncFromCloud() {
+  const statusEl = document.getElementById('syncStatus');
+  statusEl.textContent = '拉取中...';
+  try {
+    // 先尝试带auth的API（可获取最新内容）
+    const token = State.settings.syncGithubToken;
+    let data;
+    if (token) {
+      const res = await fetch(`https://api.github.com/repos/${SYNC_REPO}/contents/${SYNC_PATH}`, {
+        headers: { 'Authorization': `token ${token}` }
+      });
+      const json = await res.json();
+      if (json.content) {
+        data = JSON.parse(atob(json.content.replace(/\n/g, '')));
+      } else if (json.message) {
+        throw new Error(json.message);
+      }
+    } else {
+      // 无token则用raw URL（可能缓存）
+      const res = await fetch(SYNC_RAW_URL + '?t=' + Date.now());
+      if (!res.ok) throw new Error('获取失败: ' + res.status);
+      data = await res.json();
+    }
+
+    if (!Array.isArray(data)) throw new Error('云端数据格式异常');
+
+    // 合并：以id去重，保留最新的记录
+    const merged = mergeHistory(State.history, data);
+    State.history = merged;
+    safeSaveHistory();
+    renderHistory();
+
+    const localCount = State.history.length;
+    const cloudCount = data.length;
+    statusEl.textContent = `✅ 已同步（云端${cloudCount}条，合并后${localCount}条）`;
+    toast('云端历史已同步', 'success');
+  } catch(e) {
+    statusEl.textContent = '❌ ' + e.message;
+    toast('同步失败: ' + e.message, 'error');
+  }
+}
+
+// 推送本地历史到云端
+async function syncToCloud() {
+  const token = State.settings.syncGithubToken;
+  const statusEl = document.getElementById('syncStatus');
+  if (!token) {
+    statusEl.textContent = '❌ 请先填写GitHub Token';
+    toast('请先在设置中填写GitHub Token', 'error');
+    return;
+  }
+  statusEl.textContent = '推送中...';
+  try {
+    // 先拉取云端最新数据合并
+    let cloudData = [];
+    let cloudSha = null;
+    const getRes = await fetch(`https://api.github.com/repos/${SYNC_REPO}/contents/${SYNC_PATH}`, {
+      headers: { 'Authorization': `token ${token}` }
+    });
+    const getJson = await getRes.json();
+    if (getJson.sha) {
+      cloudSha = getJson.sha;
+      cloudData = JSON.parse(atob(getJson.content.replace(/\n/g, '')));
+    }
+
+    // 合并
+    const merged = mergeHistory(cloudData, State.history);
+
+    // 推送（清理base64图片数据，只保留文本和视频URL）
+    const cleaned = merged.map(r => ({
+      id: r.id,
+      status: r.status,
+      provider: r.provider,
+      prompt: r.prompt ? r.prompt.slice(0, 200) : '',
+      videoUrl: r.videoUrl || null,
+      ratio: r.ratio || '9:16',
+      duration: r.duration || '5',
+      quality: r.quality || 'standard',
+      productName: r.productName || '',
+      username: r.username || '匿名用户',
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt || r.createdAt
+    }));
+
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(cleaned, null, 2))));
+
+    const putRes = await fetch(`https://api.github.com/repos/${SYNC_REPO}/contents/${SYNC_PATH}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: `sync: 更新共享历史 (${cleaned.length}条记录)`,
+        content: content,
+        sha: cloudSha
+      })
+    });
+
+    if (!putRes.ok) {
+      const err = await putRes.json().catch(() => ({}));
+      throw new Error(err.message || `推送失败: ${putRes.status}`);
+    }
+
+    // 更新本地
+    State.history = cleaned;
+    safeSaveHistory();
+    renderHistory();
+
+    statusEl.textContent = `✅ 已推送${cleaned.length}条记录到云端`;
+    toast('历史记录已推送到云端', 'success');
+  } catch(e) {
+    statusEl.textContent = '❌ ' + e.message;
+    toast('推送失败: ' + e.message, 'error');
+  }
+}
+
+// 合并历史记录（按id去重，保留最新的）
+function mergeHistory(a, b) {
+  const map = new Map();
+  for (const r of a) map.set(r.id, r);
+  for (const r of b) {
+    const existing = map.get(r.id);
+    if (!existing || (r.updatedAt && (!existing.updatedAt || r.updatedAt > existing.updatedAt))) {
+      map.set(r.id, r);
+    }
+  }
+  // 按时间倒序
+  return Array.from(map.values()).sort((a, b) =>
+    (b.createdAt || '').localeCompare(a.createdAt || '')
+  );
 }
 
 function updateHistoryStatus(taskId, status, videoUrl) {
@@ -1896,7 +2070,7 @@ function renderHistory() {
         <div class="history-name">${h.productName || h.prompt?.slice(0,30) || '视频任务'}</div>
         <div class="history-meta">
           <span class="status-dot ${h.status}"></span>${h.status === 'succeeded' ? '已完成' : h.status === 'failed' ? '失败' : '处理中'}
-          · ${h.provider === 'grok' ? 'Grok' : 'Seedance'} · ${h.duration || ''}s · ${formatTime(h.createdAt)}
+          · ${h.provider === 'grok' ? 'Grok' : 'Seedance'} · ${h.duration || ''}s · ${h.username ? '👤' + h.username + ' · ' : ''}${formatTime(h.createdAt)}
         </div>
       </div>
       <div class="history-actions">
