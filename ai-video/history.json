@@ -1,15 +1,29 @@
 [
   {
+    "id": "task_qI8tLuiu3ViAHJleTko5Qc1jF7U3bxZA",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "15 秒电商产品广告，纯白无缝背景，影棚专业柔光，一本社工初级必刷母题教辅，镜头环绕书本缓慢旋转，依次特写封面蓝色、绿色、红色功能标签，微距拍摄封面印刷文字，再缓缓拉远露出完整书本与书脊，画面干净高级，出版物实拍质感，铜版纸纹理清晰，字幕浮动标注：精选母题｜梳理考点｜攻克易错，专业备考教辅，8K 商业静物动态短片，运镜平稳顺滑",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/2b7f54e9-04f3-4d54-96a6-241abdcd68f9.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "doubao-seedance-2-0-260128",
+    "username": "千千",
+    "createdAt": "2026-06-04T01:09:32.745Z",
+    "updatedAt": "2026-06-04T01:11:21.302Z"
+  },
+  {
     "id": "task_OQrOdSqKTCAYEiVgxF7Igisx5QyPJ9dg",
     "status": "succeeded",
     "provider": "grok",
-    "prompt": "一个身着红纱的年轻苦行僧在沙漠行走",
+    "prompt": "ä¸ä¸ªèº«ççº¢çº±çå¹´è½»è¦è¡å§å¨æ²æ¼ è¡èµ°",
     "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/8f4b2e61-6bec-47a7-b7a4-27b076d158c3.mp4",
     "ratio": "9:16",
     "duration": "5",
     "quality": "standard",
     "productName": "",
-    "username": "好好学习",
+    "username": "å¥½å¥½å­¦ä¹ ",
     "createdAt": "2026-06-04T00:46:36.771Z",
     "updatedAt": "2026-06-04T00:48:22.667Z"
   }
