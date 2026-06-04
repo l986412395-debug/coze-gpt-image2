@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_yBZ4WQ1wU8IjkDWZHmC7mYVBkDUjOGvz",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "视频一：整体设定：上岸学姐居家书桌分享、自然光纪实实拍、真实备考经验种草，温柔口语氛围1.【0-6s 出镜开场】画面：女生坐在简约书桌前，面前摆齐初级 + 中级三本必刷母题，面带微笑对着镜头提示词：竖屏 9:16，居家书房暖自然光，写实实拍，上岸女生坐在书桌分享备考经验，桌面整齐摆放红、蓝、绿三本社工必刷母题教辅，画面舒适生活化，8K 高清字幕：一次性上岸社工！踩坑后总结备考诀窍\n2.【7-14s",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/96281e63-0d78-4289-9bff-087db79b5b68.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "社工考试必刷真题",
+    "username": "千千",
+    "createdAt": "2026-06-04T03:11:01.668Z",
+    "updatedAt": "2026-06-04T03:12:12.877Z"
+  },
+  {
     "id": "task_LD91DfU7AQPXv9jypo7w42s8kB7LTFKC",
     "status": "succeeded",
     "provider": "grok",
