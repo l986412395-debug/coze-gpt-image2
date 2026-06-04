@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_VVTnCv5Gugi2Aw2PBwCZScX8RDsgtjxd",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "竖屏 9:16，15 秒写实备考广告短片，60 帧流畅运镜，暖调居家自然光；0-4s：备考社工考生趴在书桌前，桌面堆满杂乱零散试卷习题，皱眉发愁，字幕弹出：社工备考找不到重点？盲目刷题没效果？；5-10s：镜头平滑转场，桌面依次递进出现三本教辅：红色封面《初级综合必刷母题》、蓝色封面《中级实务必刷母题》、绿色封面《中级法规与政策必刷母题》，逐个特写封面博士帽标题、三色卖点标签（300 + 母题、1",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/a1ec0af7-bfe9-41e1-8370-d95578348aa1.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "社工考试必刷真题",
+    "username": "千千",
+    "createdAt": "2026-06-04T02:57:30.580Z",
+    "updatedAt": "2026-06-04T02:58:20.015Z"
+  },
+  {
     "id": "task_DF6kk0156vmecVig4C3WNzjpXuZQh7qE",
     "status": "succeeded",
     "provider": "grok",
