@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_pcEuCVbc67YCIxg2YNDOYgamVJ17qQfy",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "0-3s: 推镜头 主播手持真题集惊喜表情\n3-6s: 拉镜头 展示真题内页红色重点标记\n6-9s: 摇镜头 对比普通题海和母题集厚度\n9-12s: 移镜头 考生刷题场景+分数上涨动画\n12-15s: 固定镜头 价格标牌+购买二维码弹幕",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/e796243b-b16a-41ff-b50a-dd5458bfb272.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "社工考试必刷真题",
+    "username": "千千",
+    "createdAt": "2026-06-04T02:25:15.116Z",
+    "updatedAt": "2026-06-04T02:27:36.601Z"
+  },
+  {
     "id": "task_RlziK65tAK3iETawuWZag6KMRPipUBIF",
     "status": "succeeded",
     "provider": "grok",
