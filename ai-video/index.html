@@ -1926,7 +1926,7 @@ async function syncFromCloud() {
       });
       const json = await res.json();
       if (json.content) {
-        data = JSON.parse(atob(json.content.replace(/\n/g, '')));
+        data = JSON.parse(decodeURIComponent(escape(atob(json.content.replace(/\n/g, '')))));
       } else if (json.message) {
         throw new Error(json.message);
       }
@@ -1975,7 +1975,7 @@ async function syncToCloud() {
     const getJson = await getRes.json();
     if (getJson.sha) {
       cloudSha = getJson.sha;
-      cloudData = JSON.parse(atob(getJson.content.replace(/\n/g, '')));
+      cloudData = JSON.parse(decodeURIComponent(escape(atob(getJson.content.replace(/\n/g, '')))));
     }
 
     // 合并
