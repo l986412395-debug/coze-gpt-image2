@@ -308,11 +308,13 @@ a{color:var(--accent2);text-decoration:none}
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label">模型精度</label>
+                <label class="form-label">文本模型</label>
                 <select class="form-select" id="modelLevel">
-                  <option value="lite">Seed-2.0-Lite（快速）</option>
+                  <option value="default">当前设置模型</option>
                   <option value="pro">Seed-2.0-Pro（高精度）</option>
+                  <option value="lite">Seed-2.0-Lite（快速）</option>
                 </select>
+                <div class="settings-hint" style="margin-top:4px">默认使用设置中配置的文本模型，也可切换火山方舟模型</div>
               </div>
             </div>
             <div class="btn-group" style="margin-top:6px">
@@ -714,19 +716,29 @@ SK-II神仙水|护肤精华水|美妆个护"></textarea>
 
       <!-- Grok设置 -->
       <div class="settings-section">
-        <div class="settings-section-title">✨ Grok Video（备选视频引擎）</div>
+        <div class="settings-section-title">✨ Grok / LLM API（视频+文本）</div>
         <div class="settings-item">
-          <label>Grok API Key</label>
+          <label>API Key</label>
           <div class="password-wrapper">
             <input type="password" id="grokApiKey" placeholder="sk-xxxxxxxxxx">
             <button class="password-toggle" onclick="togglePassword('grokApiKey')">👁️</button>
           </div>
-          <div class="settings-hint">xAI Grok API 密钥</div>
+          <div class="settings-hint">API密钥，同时用于视频生成和文本生成</div>
         </div>
         <div class="settings-item">
-          <label>Grok Base URL</label>
+          <label>Base URL</label>
           <input type="text" id="grokBaseUrl" placeholder="https://llm-api.net/v1">
-          <div class="settings-hint">Grok API 服务地址（末尾不要带/）</div>
+          <div class="settings-hint">API服务地址（末尾不要带/），支持OpenAI兼容格式的中转站</div>
+        </div>
+        <div class="settings-item">
+          <label>文本模型（文案/高阶功能）</label>
+          <input type="text" id="textModel" placeholder="deepseek-v3">
+          <div class="settings-hint">用于文案生成、竞品分析等文本功能，推荐 deepseek-v3（快且稳）、gpt-4o、qwen3-max 等</div>
+        </div>
+        <div class="settings-item">
+          <label>视频模型</label>
+          <input type="text" id="videoModel" placeholder="grok-video-3-10s">
+          <div class="settings-hint">用于视频生成，如 grok-video-3-10s（标准10秒）、grok-video-3（极速6秒）</div>
         </div>
       <!-- 云同步设置 -->
       <div class="settings-section">
@@ -778,6 +790,8 @@ const State = {
     seedanceModel: 'doubao-seedance-2-0-260128',
     grokApiKey: '',
     grokBaseUrl: 'https://llm-api.net/v1',
+    textModel: 'deepseek-v3',
+    videoModel: 'grok-video-3-10s',
     syncUsername: '',
     syncGithubToken: ''
   },
@@ -827,6 +841,8 @@ function openSettings() {
   document.getElementById('seedanceModel').value = State.settings.seedanceModel;
   document.getElementById('grokApiKey').value = State.settings.grokApiKey;
   document.getElementById('grokBaseUrl').value = State.settings.grokBaseUrl;
+  document.getElementById('textModel').value = State.settings.textModel;
+  document.getElementById('videoModel').value = State.settings.videoModel;
   document.getElementById('syncUsername').value = State.settings.syncUsername || '';
   document.getElementById('syncGithubToken').value = State.settings.syncGithubToken || '';
 }
@@ -842,6 +858,8 @@ function saveSettings() {
   State.settings.seedanceModel = document.getElementById('seedanceModel').value.trim() || 'doubao-seedance-2-0-260128';
   State.settings.grokApiKey = document.getElementById('grokApiKey').value.trim();
   State.settings.grokBaseUrl = document.getElementById('grokBaseUrl').value.trim() || 'https://llm-api.net/v1';
+  State.settings.textModel = document.getElementById('textModel').value.trim() || 'deepseek-v3';
+  State.settings.videoModel = document.getElementById('videoModel').value.trim() || 'grok-video-3-10s';
   State.settings.syncUsername = document.getElementById('syncUsername').value.trim() || '匿名用户';
   State.settings.syncGithubToken = document.getElementById('syncGithubToken').value.trim();
   
@@ -870,12 +888,12 @@ function updateApiStatus() {
   const dot = document.getElementById('apiStatusDot');
   const text = document.getElementById('apiStatusText');
   const hasVolc = !!State.settings.volcToken;
-  const hasGrok = !!State.settings.grokApiKey;
-  if (hasVolc || hasGrok) {
+  const hasGrok = !!(State.settings.grokApiKey && State.settings.grokBaseUrl);
+  if (hasGrok || hasVolc) {
     dot.className = 'config-dot connected';
     const engines = [];
+    if (hasGrok) engines.push('LLM API（视频+文本）');
     if (hasVolc) engines.push('火山方舟');
-    if (hasGrok) engines.push('Grok视频');
     text.textContent = engines.join(' + ') + ' 已配置';
   } else {
     dot.className = 'config-dot disconnected';
@@ -938,32 +956,63 @@ function selectOption(el, type) {
 }
 
 // ============ API调用（前端直接调用） ============
-async function volcAPI(model, messages, extra = {}) {
-  const token = State.settings.volcToken;
-  if (!token) throw new Error('请先在设置中配置火山方舟Bearer Token');
+// 统一文本聊天API：优先走Grok Base URL（llm-api.net），其次走火山方舟
+async function chatAPI(model, messages, extra = {}) {
+  const grokKey = State.settings.grokApiKey;
+  const grokBase = State.settings.grokBaseUrl;
+  const volcToken = State.settings.volcToken;
   
-  const url = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: extra.temperature || 0.8,
-      max_tokens: extra.max_tokens || 2000,
-      response_format: extra.response_format || { type: 'json_object' }
-    })
-  });
-  
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `API错误: ${res.status}`);
+  // 优先使用Grok Base URL（llm-api.net支持文本模型）
+  if (grokKey && grokBase) {
+    const url = `${grokBase}/chat/completions`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${grokKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: extra.temperature || 0.8,
+        max_tokens: extra.max_tokens || 2000,
+        ...(extra.response_format ? { response_format: extra.response_format } : {})
+      })
+    });
+    
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `API错误: ${res.status}`);
+    }
+    return res.json();
   }
   
-  return res.json();
+  // 回退到火山方舟
+  if (volcToken) {
+    const url = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${volcToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: extra.temperature || 0.8,
+        max_tokens: extra.max_tokens || 2000,
+        response_format: extra.response_format || { type: 'json_object' }
+      })
+    });
+    
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `火山方舟API错误: ${res.status}`);
+    }
+    return res.json();
+  }
+  
+  throw new Error('请先在设置中配置API Key（Grok API Key 或 火山方舟 Token）');
 }
 
 async function grokVideoAPI(endpoint, body, method = 'POST') {
@@ -1035,7 +1084,10 @@ async function generateCopy() {
   
   try {
     const modelLevel = document.getElementById('modelLevel').value;
-    const model = modelLevel === 'pro' ? State.settings.volcProModel : State.settings.volcLiteModel;
+    let model;
+    if (modelLevel === 'pro') model = State.settings.volcProModel;
+    else if (modelLevel === 'lite') model = State.settings.volcLiteModel;
+    else model = State.settings.textModel || State.settings.volcProModel;
     
     const systemPrompt = `你是一位顶级电商短视频策划专家，擅长为商品创作爆款带货内容。你需要基于商品信息生成以下三类文案：
 
@@ -1066,7 +1118,7 @@ ${document.getElementById('sellingPoints').value ? `核心卖点：${document.ge
 ${document.getElementById('category').value ? `品类：${document.getElementById('category').value}` : ''}
 ${document.getElementById('scenario').value ? `适用场景：${document.getElementById('scenario').value}` : ''}`;
 
-    const data = await volcAPI(model, [
+    const data = await chatAPI(model, [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
     ], {
@@ -1216,8 +1268,8 @@ async function analyzeImage() {
   btn.textContent = '🔍 识别中...';
 
   try {
-    const model = State.settings.volcProModel;
-    const data = await volcAPI(model, [
+    const model = State.settings.textModel || State.settings.volcProModel;
+    const data = await chatAPI(model, [
       {
         role: 'system',
         content: '你是商品图片识别专家，请详细识别图片中的商品信息，包括：产品类型、颜色、款式、材质、适用人群、设计细节、使用场景等。'
@@ -1341,7 +1393,7 @@ async function createVideo() {
     
     if (State.provider === 'grok') {
       // Grok视频引擎
-      const model = State.quality === 'fast' ? 'grok-video-3' : 'grok-video-3-10s';
+      const model = State.quality === 'fast' ? (State.settings.videoModel === 'grok-video-3-10s' ? 'grok-video-3' : State.settings.videoModel) : State.settings.videoModel;
       const videoBody = {
         model,
         prompt,
@@ -1517,8 +1569,8 @@ async function autoRetry() {
 
   try {
     // 用Seed2.0优化提示词
-    const model = State.settings.volcProModel;
-    const data = await volcAPI(model, [
+    const model = State.settings.textModel || State.settings.volcProModel;
+    const data = await chatAPI(model, [
       {
         role: 'system',
         content: '你是视频生成提示词优化专家。之前的视频生成因内容风控或参数问题失败，请优化提示词，规避敏感内容，调整描述方式，确保能通过审核。直接输出优化后的英文提示词，不要其他内容。'
@@ -1562,8 +1614,8 @@ async function competitorAnalysis() {
   spinner.style.display = 'inline-block';
 
   try {
-    const model = State.settings.volcProModel;
-    const data = await volcAPI(model, [
+    const model = State.settings.textModel || State.settings.volcProModel;
+    const data = await chatAPI(model, [
       {
         role: 'system',
         content: `你是电商竞品分析专家。分析竞品的短视频内容和卖点策略，然后为我们的商品生成差异化的原创脚本。
@@ -1658,9 +1710,9 @@ async function generateLongScript() {
   spinner.style.display = 'inline-block';
 
   try {
-    const model = State.settings.volcProModel;
+    const model = State.settings.textModel || State.settings.volcProModel;
     const segmentCount = parseInt(document.getElementById('segmentCount').value);
-    const data = await volcAPI(model, [
+    const data = await chatAPI(model, [
       {
         role: 'system',
         content: `你是高端品牌短视频策划专家。为商品生成专业级多段分镜长脚本。
@@ -1757,8 +1809,8 @@ async function extractTags() {
   if (!name && !text) return toast('请输入商品名称或描述', 'error');
 
   try {
-    const model = State.settings.volcLiteModel;
-    const data = await volcAPI(model, [
+    const model = State.settings.textModel || State.settings.volcLiteModel;
+    const data = await chatAPI(model, [
       {
         role: 'system',
         content: '从商品信息中提取短视频标签、搜索关键词和带货分类标签。JSON格式输出：{"tags":["标签1","标签2","标签3","标签4","标签5"],"keywords":["关键词1","关键词2","关键词3"],"categories":["分类1","分类2"]}'
@@ -1809,12 +1861,12 @@ async function batchGenerate() {
     });
 
     const results = [];
-    const model = State.settings.volcLiteModel;
+    const model = State.settings.textModel || State.settings.volcLiteModel;
 
     // 逐个生成（串行）
     for (const p of products.slice(0, 20)) {
       try {
-        const data = await volcAPI(model, [
+        const data = await chatAPI(model, [
           {
             role: 'system',
             content: '为商品快速生成短视频文案。JSON格式输出：{"title":"商品标题","script":"15秒口播","seedance_prompt":"英文视频提示词","tags":["标签1","标签2","标签3"]}'
