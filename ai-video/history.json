@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_ZHNEJYVrS1PvRlqVE5pyGcPP5kZubTqm",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "竖屏 9:16，22 秒上岸学姐经验分享短视频，温馨居家书房自然光，真人出镜分享社工上岸经验，桌面摆放三色社工必刷母题图书，镜头特写封面卖点标签，写实纪实实拍，柔和画质，好物种草短视频，60 帧流畅画面。开头真人口播说：社工考试知识点又多又杂，还好我有秘密武器，就是知晓必刷母题。",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/b772b64f-6bfb-4ef8-9a9b-b39a170cd4ac.mp4",
+    "ratio": "9:16",
+    "duration": "10",
+    "quality": "standard",
+    "productName": "社工考试必刷真题",
+    "username": "千千",
+    "createdAt": "2026-06-04T03:49:30.709Z",
+    "updatedAt": "2026-06-04T03:50:20.002Z"
+  },
+  {
     "id": "task_rSsHeJhXDkUoVeT5pwKDfz0nxG9s0zT6",
     "status": "succeeded",
     "provider": "grok",
