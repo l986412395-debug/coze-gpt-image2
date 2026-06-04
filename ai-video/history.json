@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_DF6kk0156vmecVig4C3WNzjpXuZQh7qE",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "0-3s 固定镜头，画面：备考社工的考生对着桌上杂乱的偏题习题皱眉叹气，光影：冷白室内灯光，氛围：焦虑烦躁，背景音乐：轻缓压抑短音效；3-8s 推镜头，画面：一只手把「社工考试必刷真题」册递到考生面前，考生豁然开朗，伸手接真题册，光影：一束暖光聚焦在真题册封面，氛围：充满希望；8-12s 固定近景，画面：考生翻真题册，页面清晰露出「贴合大纲」「历年母题」标注，光影：明亮柔光，氛围：轻松愉悦；12-",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/bef00df0-6cd9-4dbd-bc6d-15420563875b.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "社工考试必刷真题",
+    "username": "千千",
+    "createdAt": "2026-06-04T02:47:21.896Z",
+    "updatedAt": "2026-06-04T02:49:37.695Z"
+  },
+  {
     "id": "task_rNZVDPR5rNe7V26WDECyhYhoM8NlAgP7",
     "status": "succeeded",
     "provider": "grok",
