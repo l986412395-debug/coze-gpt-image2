@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_g7unWgQNXt7OP3c9c0dik4rpMNSFSjKO",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "Anxious student, focused teacher, lightbulb moment, exam paper, celebration",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/1b69dd98-f80d-4168-a1ca-88a530fd3ffa.mp4",
+    "ratio": "9:16",
+    "duration": "10",
+    "quality": "standard",
+    "productName": "社工考试必刷真题",
+    "username": "千千",
+    "createdAt": "2026-06-04T04:18:06.228Z",
+    "updatedAt": "2026-06-04T04:19:15.633Z"
+  },
+  {
     "id": "task_ZHNEJYVrS1PvRlqVE5pyGcPP5kZubTqm",
     "status": "succeeded",
     "provider": "grok",
