@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_RlziK65tAK3iETawuWZag6KMRPipUBIF",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "纯白无缝背景，影棚专业柔光，一本社工初级必刷母题教辅，镜头环绕书本缓慢旋转，依次特写封面玫红、橙黄、蓝色功能标签，微距拍摄封面印刷文字，再缓缓拉远露出完整书本与书脊，书脊写：2026全国社会工作者职业水平考试 《综合》必刷母题  知晓教研团队 编著。画面干净高级，出版物实拍质感，铜版纸纹理清晰，字幕浮动标注：精选母题｜梳理考点｜攻克易错，专业备考教辅，8K 商业静物动态短片，运镜平稳顺滑",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/f46cac34-e4e0-4c90-afab-9ab976d5a0e9.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "千千",
+    "username": "千千",
+    "createdAt": "2026-06-04T01:30:29.301Z",
+    "updatedAt": "2026-06-04T01:32:11.594Z"
+  },
+  {
     "id": "task_m0rjjP3gP1XuWQJFTuwnzZIMZ5Taykw3",
     "status": "succeeded",
     "provider": "grok",
