@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_Yvezj7ShXvn1Dg2g2h1qtGAl9XvddZY5",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "纯白无缝背景，影棚专业柔光，一本社工初级必刷母题教辅，镜头环绕书本缓慢旋转，依次特写封面玫红、橙黄、蓝色功能标签，微距拍摄封面印刷文字，再缓缓拉远露出完整书本与书脊，画面干净高级，出版物实拍质感，铜版纸纹理清晰，字幕浮动标注：精选母题｜梳理考点｜攻克易错，专业备考教辅，8K 商业静物动态短片，运镜平稳顺滑",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/6745a5a3-20d5-4654-97be-e09d4a3be832.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "千千",
+    "username": "千千",
+    "createdAt": "2026-06-04T01:13:02.345Z",
+    "updatedAt": "2026-06-04T01:14:42.311Z"
+  },
+  {
     "id": "task_qI8tLuiu3ViAHJleTko5Qc1jF7U3bxZA",
     "status": "succeeded",
     "provider": "grok",
