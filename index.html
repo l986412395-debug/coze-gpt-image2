@@ -443,14 +443,50 @@ fileInput.addEventListener('change', function() { for (let i = 0; i < this.files
 function dataURLtoFile(u, n) { const a = u.split(','), m = a[0].match(/:(.*?);/)[1], b = atob(a[1]); let l = b.length; const u8 = new Uint8Array(l); while(l--) u8[l] = b.charCodeAt(l); return new File([u8], n, {type:m}); }
 
 // ==================== Task ====================
+const API_TIMEOUT = 120000; // 120秒超时
+const STALE_THRESHOLD = 150000; // 150秒视为卡住
+const activeControllers = new Map(); // taskId -> AbortController
+
 async function createTask(prompt, size, quality, hasRef, refCount) {
   const id = ++taskIdCounter;
   const refBase64List = refImages.map(r => r.base64);
   const task = { id, prompt, size, quality, hasRef, refCount, refBase64List, status: 'pending', imageData: null, error: null, createdAt: new Date(), startTime: null, _imageLoaded: false, isLocal: true };
-  tasks.unshift(task); saveTasksMeta(); updateUI(); processQueue();
+  tasks.unshift(task); saveTasksMeta(); updateUI();
+  // Ensure DB is alive before queueing
+  await ensureDBAlive();
+  processQueue();
 }
 
 function updateTask(id, u) { const t = tasks.find(x => x.id === id); if (t) { Object.assign(t, u); saveTasksMeta(); updateUI(); } }
+
+// Check and recover IndexedDB after idle
+async function ensureDBAlive() {
+  try {
+    if (!db) { await openDB(); return; }
+    // Test connection with a trivial read
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    tx.objectStore(STORE_NAME).count();
+    await new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onerror = () => { db = null; openDB().then(resolve).catch(reject); }; });
+  } catch (e) {
+    try { db = null; await openDB(); } catch (e2) { console.error('DB recovery failed:', e2); }
+  }
+}
+
+// Detect and recover stuck tasks
+function recoverStuckTasks() {
+  const now = Date.now();
+  let recovered = false;
+  for (const t of tasks) {
+    if (t.status === 'generating' && t.startTime && (now - t.startTime > STALE_THRESHOLD)) {
+      // Abort the fetch if still active
+      const ctrl = activeControllers.get(t.id);
+      if (ctrl) { try { ctrl.abort(); } catch {} activeControllers.delete(t.id); }
+      updateTask(t.id, { status: 'failed', error: '请求超时，请重试' });
+      recovered = true;
+    }
+  }
+  if (recovered) processQueue();
+}
 
 async function processQueue() {
   const max = parseInt(parallelSelect.value) || 3;
@@ -462,21 +498,33 @@ async function processQueue() {
 
 async function executeTask(task) {
   updateTask(task.id, { status: 'generating', startTime: Date.now() });
+  const controller = new AbortController();
+  activeControllers.set(task.id, controller);
+  // Auto-timeout
+  const timeoutId = setTimeout(() => { try { controller.abort(); } catch {} }, API_TIMEOUT);
   try {
-    const r = task.hasRef ? await callEditAPI(task) : await callGenerateAPI(task);
+    await ensureDBAlive();
+    const r = task.hasRef ? await callEditAPI(task, controller.signal) : await callGenerateAPI(task, controller.signal);
     if (r?.imageData) { await saveTaskImage(task.id, r.imageData); updateTask(task.id, { status: 'success', imageData: r.imageData, _imageLoaded: true }); showToast('生成成功！', 'success'); GistStore.addTask(task); }
     else throw new Error('API 返回数据为空');
-  } catch (e) { updateTask(task.id, { status: 'failed', error: e.message || '生成失败' }); showToast(`生成失败: ${e.message}`, 'error'); }
-  processQueue();
+  } catch (e) {
+    const msg = e.name === 'AbortError' ? '请求超时，请重试' : (e.message || '生成失败');
+    updateTask(task.id, { status: 'failed', error: msg });
+    showToast(`生成失败: ${msg}`, 'error');
+  } finally {
+    clearTimeout(timeoutId);
+    activeControllers.delete(task.id);
+    processQueue();
+  }
 }
 
-async function callGenerateAPI(t) {
-  const r = await fetch(`${CONFIG.apiBase}/images/generations`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${CONFIG.apiKey}` }, body: JSON.stringify({ model: 'gpt-image-2', prompt: t.prompt, size: t.size, quality: t.quality, response_format: 'b64_json' }) });
+async function callGenerateAPI(t, signal) {
+  const r = await fetch(`${CONFIG.apiBase}/images/generations`, { method: 'POST', signal, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${CONFIG.apiKey}` }, body: JSON.stringify({ model: 'gpt-image-2', prompt: t.prompt, size: t.size, quality: t.quality, response_format: 'b64_json' }) });
   if (!r.ok) { const x = await r.text(); let m = `HTTP ${r.status}`; try { m = JSON.parse(x).error?.message || m; } catch {} throw new Error(m); }
   const d = await r.json(); if (d.data?.[0]?.b64_json) return { imageData: `data:image/png;base64,${d.data[0].b64_json}` }; throw new Error('无图片数据');
 }
 
-async function callEditAPI(t) {
+async function callEditAPI(t, signal) {
   const fd = new FormData();
   fd.append('model', 'gpt-image-2');
   fd.append('prompt', t.prompt);
@@ -489,7 +537,7 @@ async function callEditAPI(t) {
       fd.append('image', file);
     }
   }
-  const r = await fetch(`${CONFIG.apiBase}/images/edits`, { method: 'POST', headers: { 'Authorization': `Bearer ${CONFIG.apiKey}` }, body: fd });
+  const r = await fetch(`${CONFIG.apiBase}/images/edits`, { method: 'POST', signal, headers: { 'Authorization': `Bearer ${CONFIG.apiKey}` }, body: fd });
   if (!r.ok) { const x = await r.text(); let m = `HTTP ${r.status}`; try { m = JSON.parse(x).error?.message || m; } catch {} throw new Error(m); }
   const d = await r.json();
   if (d.data?.[0]?.b64_json) return { imageData: `data:image/png;base64,${d.data[0].b64_json}` };
@@ -707,7 +755,14 @@ function closeConfirm() { document.getElementById('confirmOverlay').classList.re
 function showToast(msg, type = 'info') { const c = document.getElementById('toastContainer'), t = document.createElement('div'); t.className = `toast ${type}`; t.textContent = msg; c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; t.style.transition = 'all .3s'; setTimeout(() => t.remove(), 300); }, 3000); }
 
 // ==================== Timer ====================
-setInterval(() => { if (tasks.some(t => t.status === 'generating')) updateUI(); }, 2000);
+// Update generating task counters + detect stuck tasks
+setInterval(() => {
+  if (tasks.some(t => t.status === 'generating')) updateUI();
+  recoverStuckTasks();
+}, 5000);
+
+// Keep DB alive during idle
+setInterval(() => { ensureDBAlive(); }, 60000);
 
 // ==================== Keyboard ====================
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { if (lightbox.classList.contains('show')) closeLightbox(); if (settingsModal.classList.contains('show')) closeSettings(); if (document.getElementById('confirmOverlay').classList.contains('show')) closeConfirm(); } });
@@ -717,10 +772,36 @@ document.getElementById('confirmOverlay').addEventListener('click', function(e) 
 // ==================== Init ====================
 async function init() {
   await openDB(); GistStore.updateUI();
-  tasks = loadTasksMeta(); updateUI();
+  tasks = loadTasksMeta();
+  // Recover tasks stuck in "generating" from last session (crash/sleep)
+  for (const t of tasks) {
+    if (t.status === 'generating') { t.status = 'pending'; }
+  }
+  saveTasksMeta(); updateUI();
   if (CONFIG.gistId) await syncSharedTasks();
   if (tasks.some(t => t.status === 'pending' && t.isLocal)) processQueue();
 }
+
+// Detect wake from sleep: if >30s gap between checks, computer likely slept
+let lastWakeCheck = Date.now();
+setInterval(() => {
+  const now = Date.now();
+  if (now - lastWakeCheck > 30000) {
+    // Computer just woke up — abort all active requests, reset connections
+    console.log('Wake from sleep detected, resetting connections');
+    for (const [id, ctrl] of activeControllers) {
+      try { ctrl.abort(); } catch {}
+      const t = tasks.find(x => x.id === id);
+      if (t && t.status === 'generating') {
+        updateTask(id, { status: 'failed', error: '网络重置，请重试' });
+      }
+    }
+    activeControllers.clear();
+    ensureDBAlive().then(() => processQueue());
+  }
+  lastWakeCheck = now;
+}, 3000);
+
 init();
 </script>
 </body>
