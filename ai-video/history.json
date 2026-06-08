@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_U0Sf5JlrMyHvwhC5K4cViZTJdtMnKEXa",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "背景是考驾照的场地，视频风格真实。小轱辘形象请参考上传图片（动画：小轱辘原地弹跳一圈，天线晃动，大眼睛俏皮眨眼，小手热情挥手）\n画面：隔壁王教练站主位，奶黄 Q 版小车「小轮」跳在教练肩头挥手配音（清晰少年音）：哈喽大家好，我是驾考助手小轮，旁边是隔壁王教练！字幕：学车不迷路，小轮来相助",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/92002474-11d2-453e-bfc2-f7d33b4ddd62.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "千千",
+    "username": "千千",
+    "createdAt": "2026-06-08T07:36:26.888Z",
+    "updatedAt": "2026-06-08T07:37:18.648Z"
+  },
+  {
     "id": "task_HJygrGP8II0Ue6qRnE6c3McyTvKvnqNa",
     "status": "succeeded",
     "provider": "grok",
