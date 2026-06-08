@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_qzo5po4H4fjLBbQwhHadv2tFzGSDWYc1",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "画面：卧室场景，主角已经换成睡衣了，他猛然掀开被子，睁眼坐起，抚着胸口惊魂未定，眼神若有所思。主角形象就是所给图中人物形象。卧室呈现温馨明亮风格",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/3d27e3d8-6a87-47fd-9636-630e3320cc62.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "",
+    "username": "千千",
+    "createdAt": "2026-06-08T23:56:14.935Z",
+    "updatedAt": "2026-06-08T23:58:12.873Z"
+  },
+  {
     "id": "task_PHc10AyweRhfYfw4xLMn2vcwemImzYNU",
     "status": "succeeded",
     "provider": "grok",
