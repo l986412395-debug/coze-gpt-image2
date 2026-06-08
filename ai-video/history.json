@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_v0QSeIUpABcp72Se8ZXrUHcoVkoCJjxg",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "画面：暮色荒野，主角拼命奔跑，后方野兽身影紧随，无路可逃时发现前方停放一辆汽车，立刻冲过去。口播：梦里被野兽疯狂追赶，拼尽全力逃到车旁，以为终于安全了。音效：风声、野兽嘶吼、奔跑声\n\n画面：主角钻进车内，双手乱舞，分不清档位和油门，车辆原地窜动后七扭八拐地撞向路边障碍物，画面剧烈晃动。口播：可握着方向盘，却连车都开不走，慌乱之下，意外接踵而至。音效：引擎空转声、撞击声。请去除图片上的字幕，不要带字",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/1f580635-27dd-46ab-b13c-cf9169e48f76.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "千千",
+    "username": "千千",
+    "createdAt": "2026-06-08T06:54:25.644Z",
+    "updatedAt": "2026-06-08T06:55:26.796Z"
+  },
+  {
     "id": "task_9CnE2ZFhT1bqIu04XteisCmSa2Yw9gq7",
     "status": "succeeded",
     "provider": "grok",
