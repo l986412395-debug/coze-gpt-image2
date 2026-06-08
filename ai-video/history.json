@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_uHOAMLAEyh9EQyyfnlzxncwFQ6KTDWz6",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "# 10秒极寒逃生电动车短片脚本\n总时长：10s，场景：冰封荒野，大雪封路，电车结满冰霜\n0-2s\n全景：暴雪漫天，主角冻得发抖钻进电车，急切想驾车逃离\n台词（急促）：必须马上离开这里！\n音效：狂风呼啸\n\n2-5s\n车内近景：挡风玻璃结冰，主角慌乱挂D挡，猛地一脚踩死电门\n台词：快走！\n音效：电机刺耳轰鸣、轮胎刨冰空转尖响\n\n5-8s\n车头特写：车轮原地打滑刨出冰坑，仪表盘弹出低温亏电告警\n主角慌",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/ff806142-8db6-41ec-83ec-7b91971a5657.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "千千",
+    "username": "千千",
+    "createdAt": "2026-06-08T07:54:55.834Z",
+    "updatedAt": "2026-06-08T07:55:54.074Z"
+  },
+  {
     "id": "task_U0Sf5JlrMyHvwhC5K4cViZTJdtMnKEXa",
     "status": "succeeded",
     "provider": "grok",
