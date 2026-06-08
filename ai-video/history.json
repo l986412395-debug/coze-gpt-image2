@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_7L4hjHlMHaOkEhNrCYueD0Vmr137YhOh",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "视频背景：真实驾校场地实景，画面干净接地气\n整体风格：真实、轻快、治愈、适合驾考科普短视频\n配音区分：小轮（活泼少年音）、王教练（沉稳亲和男声）\n【 小轮出场动画+口播】\n【动画】小轮原地弹跳一圈，天线晃动，大眼睛俏皮眨眼，小手热情挥手\n【小轮口播】哈喽！正在学车的小伙伴们，大家好！我是你们的专属驾考小助手——小轮！\n【动画】小轮车身微微倾斜，小手指向镜头侧边，引出人物\n【小轮口播】学车不迷路，小",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/8d22aee7-ef58-4239-8037-8d9bbb1e4149.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "千千",
+    "username": "千千",
+    "createdAt": "2026-06-08T09:50:19.938Z",
+    "updatedAt": "2026-06-08T09:51:23.613Z"
+  },
+  {
     "id": "task_DqFqhjkRAx0jy6tAZyGwbdi3wWWid7qr",
     "status": "succeeded",
     "provider": "grok",
