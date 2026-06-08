@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_dhSO33XrTzhhtqzr1YP5TbdfAIbprR46",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "总时长：8s   【画面】超载校车被警车拦停，民警给司机戴上手铐带走。旁白：校车超载，处罚严重！音效：警笛声 警察和司机退场。\n【画面转向】切王教练 + 小轮出镜讲解，小轮说：安全行车，请勿超载！教练：载客超载按车型、超员比例扣分，记好！\n【画面】文字分栏弹出扣分对照表（尾帧图片），人声快速收尾小轮：超载扣分两步走，先车型再比例。注意：视频整体不要加字幕。",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/c2b7c0f3-af82-4e77-af78-d922641595d4.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "千千",
+    "username": "千千",
+    "createdAt": "2026-06-08T08:44:24.293Z",
+    "updatedAt": "2026-06-08T08:45:42.697Z"
+  },
+  {
     "id": "task_l0Ux8zwVTQ6AeqHXlEAK5MnZPErkfAtI",
     "status": "succeeded",
     "provider": "grok",
