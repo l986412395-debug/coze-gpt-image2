@@ -1,5 +1,33 @@
 [
   {
+    "id": "task_WUn2GdSMiKdxsFCfubGsxVBOIB16nBYF",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "背景是考驾照的场地，视频风格真实。小轱辘形象请参考上传图片（动画：小轱辘原地弹跳一圈，天线晃动，大眼睛俏皮眨眼，小手热情挥手）\n口播（年轻甜妹 / 少年音，轻快活泼）：“哈喽！我是你的专属驾考小助手 —— 小轱辘！”\n（动画：小轱辘车身微微倾斜，指向屏幕）\n口播：“学车不迷路，轱辘来相助！快上车，我们出发啦！”\n（画面定格或快速转场，进入正片）",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/8b98b30c-a798-453a-8ab9-6d738a8c56f2.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "驾考产品",
+    "username": "千千",
+    "createdAt": "2026-06-08T03:12:40.032Z",
+    "updatedAt": "2026-06-08T03:14:28.712Z"
+  },
+  {
+    "id": "task_AMZ2MezxqfR2HIMNRIs3pV8yCnKN9F2f",
+    "status": "processing",
+    "provider": "grok",
+    "prompt": "【前缀限制】：竖屏 9:16，温馨居家书房自然光，写实纪实实拍，柔和画质，60 帧流畅画面，上岸学姐经验分享好物短视频。（角色：休闲穿搭上岸学姐）端坐书桌前正对镜头。【镜头与运镜】：开篇中景出镜口播，随后快速切特写镜头，镜头下移特写桌面摆放的三本社工必刷母题图书，镜头聚焦书本封面卖点标签，书本占画面近二分之一。对话语言：学姐（直面镜头，亲切温和微笑）：“社工考试知识点又多又杂，还好我有秘密武器，就",
+    "videoUrl": null,
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "千千",
+    "username": "千千",
+    "createdAt": "2026-06-04T09:13:38.660Z",
+    "updatedAt": "2026-06-04T09:13:38.660Z"
+  },
+  {
     "id": "task_g7unWgQNXt7OP3c9c0dik4rpMNSFSjKO",
     "status": "succeeded",
     "provider": "grok",
