@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_l0Ux8zwVTQ6AeqHXlEAK5MnZPErkfAtI",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "总时长：8s   【画面】超载校车被警车拦停，民警给司机戴上手铐带走。旁白：校车超载，处罚严重！音效：警笛声\n【画面】切王教练 + 小轮出镜讲解，小轮说：安全行车，请勿超载！教练：载客超载按车型、超员比例扣分，记好！\n【画面】文字分栏弹出扣分对照表（尾帧图片），人声快速收尾小轮：校车 / 客运车超 20% 以上直接扣 12 分；7 座以上、7 座以下扣分标准各有区分，千万别超载！王教练：超载扣分两",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/6b11e496-c29d-41e7-8a33-5d44f9d1670c.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "千千",
+    "username": "千千",
+    "createdAt": "2026-06-08T08:39:19.973Z",
+    "updatedAt": "2026-06-08T08:41:24.189Z"
+  },
+  {
     "id": "task_GucRMylty5xrLDNfWsxZHetH57XOqYo6",
     "status": "succeeded",
     "provider": "grok",
