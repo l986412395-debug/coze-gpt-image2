@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_MJxqdVJp5RF1PQBYC2EkYDwXbJ8c5ZXU",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "背景是考驾照的场地，视频风格真实。小轱辘形象请参考上传图片（动画：小轱辘原地弹跳一圈，天线晃动，大眼睛俏皮眨眼，小手热情挥手）\n口播（少年音，轻快活泼）：“哈喽！我是你的专属驾考小助手 —— 小轱辘！”\n（动画：小轱辘车身微微倾斜，指向屏幕）\n口播：“学车不迷路，轱辘来相助！快上车，我们出发啦！”\n（画面定格或快速转场，进入正片）",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/577163f3-2b0a-41d3-8a9f-3b0054d44e5f.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "千千",
+    "username": "千千",
+    "createdAt": "2026-06-08T07:03:49.659Z",
+    "updatedAt": "2026-06-08T07:04:48.400Z"
+  },
+  {
     "id": "task_v0QSeIUpABcp72Se8ZXrUHcoVkoCJjxg",
     "status": "succeeded",
     "provider": "grok",
