@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_PHc10AyweRhfYfw4xLMn2vcwemImzYNU",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "画面：卧室场景，主角猛然睁眼坐起，抚着胸口惊魂未定，眼神若有所思。主角形象就是所给图中人物形象。卧室呈现温馨明亮风格",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/f0281dd0-360d-4f4f-bfc9-b4246a3938e4.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "",
+    "username": "千千",
+    "createdAt": "2026-06-08T23:48:55.685Z",
+    "updatedAt": "2026-06-08T23:50:41.587Z"
+  },
+  {
     "id": "task_7L4hjHlMHaOkEhNrCYueD0Vmr137YhOh",
     "status": "succeeded",
     "provider": "grok",
