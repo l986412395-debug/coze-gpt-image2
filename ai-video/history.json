@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_HIACPCMHe1TQKBKmovQbQAmKaOwLx3Jv",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "一家三口的形象就是图片所给，背景是人来人往的火车站，一家三口无奈地看着手机上购票界面的售罄提示，爸爸叹气，妈妈说：“要是自驾回家就好了。”女儿叹气：“我要是能早点把驾照考下来就好了。”\n注意：场景真实，整个视频不要有字幕",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/c49c1181-ff7f-4a2c-bdcc-982701f9efcc.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "",
+    "username": "千千",
+    "createdAt": "2026-06-09T01:32:22.972Z",
+    "updatedAt": "2026-06-09T01:34:38.947Z"
+  },
+  {
     "id": "task_G0yYc1JG2fmZWqQOhp4eqQ69OyKfheSE",
     "status": "succeeded",
     "provider": "grok",
