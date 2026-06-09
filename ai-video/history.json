@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_CWR2LE2RCO10bD3H3e81d4EusNK399Sy",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "女生在旁边教练的指导下，认真学车中。旁白：考下驾照自由行，春运归家不用慌。\n视频中请不要出现字幕",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/9a5bb791-54c8-4074-92e6-3400c2def15a.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "",
+    "username": "千千",
+    "createdAt": "2026-06-09T03:55:06.121Z",
+    "updatedAt": "2026-06-09T03:58:11.103Z"
+  },
+  {
     "id": "task_VUNTeduUd2qJxKZse6KMOEHDpGjw5nZl",
     "status": "succeeded",
     "provider": "grok",
