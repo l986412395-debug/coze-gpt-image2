@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_G0yYc1JG2fmZWqQOhp4eqQ69OyKfheSE",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "危机画面\n车站人山人海、车票售罄、大巴停运，一家人看着手机上车票售罄叹气，想要自驾却不会开车，无证寸步难行。\n口播\n每到节假日，最无奈的不是路途遥远，而是明明有车，却只能看人回家、自己被困。\n转场\n拥挤混乱车站，秒切空旷舒适驾校训练场，自由练车、轻松学车画面。\n注意：场景真实，整个视频不要有字幕",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/775b4fc7-d4dc-408d-9e68-30e770338762.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "",
+    "username": "千千",
+    "createdAt": "2026-06-09T01:15:11.733Z",
+    "updatedAt": "2026-06-09T01:16:57.560Z"
+  },
+  {
     "id": "task_HtLRGnfJ2zb8Na9EBe4yA1yHrzTlDvXC",
     "status": "succeeded",
     "provider": "grok",
