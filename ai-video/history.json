@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_cUVPY7Gywn2eIn7PJ3Tg8U8U8uU4fWXr",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "动漫风格，画面：挡把拟人化，穿西装疯狂跑来跑去。\n配音：\n“考试最容易扣分的就是它俩！”\n（镜头转换）\n画面：挡把举手。\n挡把：\n“我负责换挡！”\n旁边出现1挡、2挡、R挡路牌。\n视频中请不要出现字幕",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/909d08c1-0d2e-438a-a894-70c9b4fbe6a2.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "",
+    "username": "千千",
+    "createdAt": "2026-06-09T02:23:26.745Z",
+    "updatedAt": "2026-06-09T02:26:11.654Z"
+  },
+  {
     "id": "task_rTmgIjJtNYZddj1sNZ5KKlPh07EvhFwN",
     "status": "succeeded",
     "provider": "grok",
