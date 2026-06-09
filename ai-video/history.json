@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_fwQLLpTMeGOFPDru0yHlUN0Vme4mPCww",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "【开头】\n科一考不过的人，\n最大的错误就是拼命刷题。\n【中间】你有没有发现：今天做对，明天又错。刷1000题，还是记不住。因为你在记答案，不是记规律。\n比如：看到\"减速让行\"优先选安全。\n看到“能不能超车”，优先选不能。\n【结尾】会规律的人刷500题，不会规律的人刷5000题，差别就在这里\n视频不要加字幕",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/e43bcfe7-79c1-4d4f-bd7e-e3b10c852341.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "",
+    "username": "千千",
+    "createdAt": "2026-06-09T06:04:28.324Z",
+    "updatedAt": "2026-06-09T06:05:49.805Z"
+  },
+  {
     "id": "task_CWR2LE2RCO10bD3H3e81d4EusNK399Sy",
     "status": "succeeded",
     "provider": "grok",
