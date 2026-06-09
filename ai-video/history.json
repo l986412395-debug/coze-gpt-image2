@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_VUNTeduUd2qJxKZse6KMOEHDpGjw5nZl",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "0-3秒\n画面：蓝色货车来到自助餐厅。\n老板说：“随便吃！”\n货车开心：“那我可不客气了！”疯狂往车上堆货。\n3-6秒\n画面：货越来越高。货车表情逐渐变化。\n轻微超载：货车惬意\n中度超载：货车流汗\n严重超载：货车惊恐\n6-10秒\n画面：交警突然出现。货车吓得发抖。\n交警：“别数货，看比例！”\n镜头定格：\n30%以下→1分\n30%-50%→3分\n50%以上→6分\n配音：\n“记住口诀：轻一、中三、重六",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/9a334b18-474c-4cc2-97d3-6853652daeb9.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "",
+    "username": "千千",
+    "createdAt": "2026-06-09T03:43:12.611Z",
+    "updatedAt": "2026-06-09T03:45:10.586Z"
+  },
+  {
     "id": "task_ZikqlzHKaN0Kd3vArwZq1No5aVytREDR",
     "status": "succeeded",
     "provider": "grok",
