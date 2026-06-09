@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_dF4fQctvlZmPT2cK1RWaxyz3oAHFN5SF",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "画面：无缝转场到驾校，坡道起步、倒车入库、道路练习等实景，主角从容驾车，旁边坐着驾考教练指导。旁白：关键时刻，掌握驾驶技能，努力自保。别等遇险才后悔，趁早拿下驾照，给自己多一份底气。视频全程不要出现字幕",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/c783d1bf-9fea-4ce3-8482-f88d403510df.mp4",
+    "ratio": "16:9",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "",
+    "username": "千千",
+    "createdAt": "2026-06-09T00:34:09.127Z",
+    "updatedAt": "2026-06-09T00:36:11.684Z"
+  },
+  {
     "id": "task_JbgQvxv3OLsYSYp4CyXZSMdt6fTzC86V",
     "status": "succeeded",
     "provider": "grok",
