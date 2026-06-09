@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_GTFImHhufN157lceaZyVHGb8odiGC4kB",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "【开头】深夜一个考生，一边苦恼地刷题，一边小声嘀咕：后天考试，现在才开始刷题。还有救吗？\n【中间】镜头转向王教练，王教练摆手：“不要再刷新题了。”王教练形象就是首帧图\n视频不要加字幕",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/62f74775-a245-4089-bc49-f4a6d3a7112f.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "",
+    "username": "千千",
+    "createdAt": "2026-06-09T06:39:41.516Z",
+    "updatedAt": "2026-06-09T06:40:36.548Z"
+  },
+  {
     "id": "task_fwQLLpTMeGOFPDru0yHlUN0Vme4mPCww",
     "status": "succeeded",
     "provider": "grok",
