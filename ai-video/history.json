@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_qUSoMmLVH6elmBWAGf9XkT2W5mbmDNoL",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "一家三口的形象就是图片所给，背景是人来人往的火车站，一家三口无奈地看着手机（手机正常拿在人物手上，不要翻转，如图片所示），爸爸叹气，妈妈说：“要是能自己开车回家就好了。”女儿叹气：“要是能早点考下驾照就好了。”\n注意：场景真实，整个视频不要有字幕",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/7f2ecefe-2a14-4fd1-b41f-706271910e07.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "",
+    "username": "千千",
+    "createdAt": "2026-06-09T01:37:40.405Z",
+    "updatedAt": "2026-06-09T01:40:10.021Z"
+  },
+  {
     "id": "task_HIACPCMHe1TQKBKmovQbQAmKaOwLx3Jv",
     "status": "succeeded",
     "provider": "grok",
