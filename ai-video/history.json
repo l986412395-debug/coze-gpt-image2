@@ -1,5 +1,19 @@
 [
   {
+    "id": "task_ZikqlzHKaN0Kd3vArwZq1No5aVytREDR",
+    "status": "succeeded",
+    "provider": "grok",
+    "prompt": "漫画风格，0-5秒，画面：手刹肌肉男死死拉住汽车。\n手刹：\n“我负责拉住车！”汽车轮胎被锁住。\n快速切换下一个画面6-10秒\n画面：教练左手拿一个手刹，右手拿一个档位杆，教练形象及动作如尾帧图所示。\n教练说：圆头会变挡，长杆能拉车。\n视频中请不要出现字幕",
+    "videoUrl": "https://soruxgpt-saas-yimeng-api.soruxgpt.com/file_download/626c6966-9a92-404b-ae8d-fdb61bcca192.mp4",
+    "ratio": "9:16",
+    "duration": "5",
+    "quality": "standard",
+    "productName": "",
+    "username": "千千",
+    "createdAt": "2026-06-09T02:52:01.569Z",
+    "updatedAt": "2026-06-09T02:53:50.267Z"
+  },
+  {
     "id": "task_CFd3F3YcmG6GCItLabghF10Y1wcvqCmz",
     "status": "succeeded",
     "provider": "grok",
